@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Varsity Swim Team - Swimmer Self-Service Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 font-sans min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Swimmer Lookup Container -->
+    <main class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden space-y-6 p-6">
+        
+        <!-- Header Banner -->
+        <div class="text-center space-y-2 border-b pb-4">
+            <div class="inline-flex p-3 bg-blue-100 text-blue-700 rounded-full mb-1">
+                <i class="fa-solid fa-person-swimming text-3xl"></i>
+            </div>
+            <h1 class="text-xl font-bold text-slate-800">Swimmer Progress Portal</h1>
+            <p class="text-xs text-slate-500">Check your Varsity Letter status & attendance record</p>
+        </div>
+
+        <!-- ID Input Form -->
+        <div id="lookup-form" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Enter Web App Script URL (First time set up)</label>
+                <input type="url" id="script-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full text-xs border rounded-lg px-3 py-2 border-slate-300 focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Enter Your 4-Digit Swimmer ID PIN</label>
+                <div class="flex gap-2">
+                    <input type="password" id="pin-input" maxlength="4" pattern="\d{4}" placeholder="1234" class="w-full text-center border rounded-lg px-4 py-2.5 text-xl font-mono tracking-widest border-slate-300 focus:ring-2 focus:ring-blue-500">
+                    <button onclick="lookupSwimmer()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition">
+                        Check
+                    </button>
+                </div>
+            </div>
+            <p id="error-msg" class="text-xs text-rose-600 text-center hidden font-medium"></p>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="hidden text-center py-6 space-y-2">
+            <i class="fa-solid fa-spinner fa-spin text-2xl text-blue-600"></i>
+            <p class="text-xs text-slate-500">Fetching your records...</p>
+        </div>
+
+        <!-- Results Card (Hidden by default) -->
+        <div id="result-card" class="hidden space-y-5 border-t pt-4">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 id="swimmer-name" class="text-lg font-bold text-slate-800">--</h2>
+                    <p id="swimmer-meta" class="text-xs text-slate-500">--</p>
+                </div>
+                <span id="varsity-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border">
+                    --
+                </span>
+            </div>
+
+            <!-- Attendance Gauges -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-50 p-3 rounded-xl border text-center">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Swim Attendance</p>
+                    <p id="swim-pct" class="text-2xl font-extrabold text-blue-600 mt-1">0%</p>
+                    <p class="text-[10px] text-slate-400">Target: 85%</p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border text-center">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Strength Training</p>
+                    <p id="strength-pct" class="text-2xl font-extrabold text-indigo-600 mt-1">0%</p>
+                    <p class="text-[10px] text-slate-400">Target: 85%</p>
+                </div>
+            </div>
+
+            <!-- Detailed History -->
+            <div class="space-y-2">
+                <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider">Attendance Log</h3>
+                <div id="history-log" class="max-h-48 overflow-y-auto space-y-1.5 text-xs pr-1">
+                    <!-- Dynamic log -->
+                </div>
+            </div>
+
+            <button onclick="resetLookup()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">
+                Check Another PIN
+            </button>
+        </div>
+
+    </main>
+
+    <script>
+        // Auto-load saved Apps Script URL if previously saved
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedUrl = localStorage.getItem("swim_app_script_url");
+            if (savedUrl) {
+                document.getElementById("script-url-input").value = savedUrl;
+            }
+        });
+
+        async function lookupSwimmer() {
+            const scriptUrl = document.getElementById("script-url-input").value.trim();
+            const pin = document.getElementById("pin-input").value.trim();
+            const errorEl = document.getElementById("error-msg");
+            errorEl.classList.add("hidden");
+
+            if (!scriptUrl) {
+                showError("Please enter your Google Apps Script URL.");
+                return;
+            }
+            if (!pin || pin.length !== 4) {
+                showError("Please enter a valid 4-digit PIN.");
+                return;
+            }
+
+            // Save script URL locally
+            localStorage.setItem("swim_app_script_url", scriptUrl);
+
+            document.getElementById("loading").classList.remove("hidden");
+            document.getElementById("result-card").classList.add("hidden");
+
+            try {
+                const response = await fetch(`${scriptUrl}?action=lookup&pin=${pin}`);
+                const data = await response.json();
+
+                document.getElementById("loading").classList.add("hidden");
+
+                if (data.status === "error") {
+                    showError(data.message || "Invalid Swimmer PIN.");
+                    return;
+                }
+
+                // Render Swimmer Record
+                renderSwimmerData(data.data);
+
+            } catch (err) {
+                document.getElementById("loading").classList.add("hidden");
+                showError("Unable to fetch data. Verify network or Script URL.");
+            }
+        }
+
+        function renderSwimmerData(swimmer) {
+            document.getElementById("swimmer-name").textContent = `${swimmer.firstName} ${swimmer.lastName}`;
+            document.getElementById("swimmer-meta").textContent = `Grade ${swimmer.grade}th | ${swimmer.gender} Team | ${swimmer.type} Swimmer`;
+            
+            document.getElementById("swim-pct").textContent = `${swimmer.swimPct}%`;
+            document.getElementById("strength-pct").textContent = `${swimmer.strengthPct}%`;
+
+            const badge = document.getElementById("varsity-badge");
+            badge.textContent = swimmer.status;
+            if (swimmer.status === "Qualified") {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border-emerald-300 border";
+            } else if (swimmer.status === "At Risk") {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border-amber-300 border";
+            } else {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border-rose-300 border";
+            }
+
+            const historyContainer = document.getElementById("history-log");
+            historyContainer.innerHTML = "";
+
+            if (!swimmer.history || swimmer.history.length === 0) {
+                historyContainer.innerHTML = `<p class="text-slate-400 italic">No attendance records found yet.</p>`;
+            } else {
+                swimmer.history.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = "flex justify-between items-center p-2 bg-slate-50 rounded border text-slate-700";
+                    div.innerHTML = `
+                        <span><strong>${item.date}</strong> (${item.type})</span>
+                        <span class="font-semibold ${
+                            item.status === 'Present' ? 'text-emerald-600' :
+                            item.status.includes('Absent') ? 'text-amber-600' :
+                            item.status.includes('No Comm') ? 'text-rose-600' : 'text-blue-600'
+                        }">${item.status}</span>
+                    `;
+                    historyContainer.appendChild(div);
+                });
+            }
+
+            document.getElementById("result-card").classList.remove("hidden");
+        }
+
+        function showError(msg) {
+            const errorEl = document.getElementById("error-msg");
+            errorEl.textContent = msg;
+            errorEl.classList.remove("hidden");
+        }
+
+        function resetLookup() {
+            document.getElementById("pin-input").value = "";
+            document.getElementById("result-card").classList.add("hidden");
+        }
+    </script>
+</body>
+</html>
