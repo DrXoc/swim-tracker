@@ -1,1315 +1,2018 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>High School Varsity Swim Team Manager</title>
-    <!-- Tailwind CSS -->
+    <title>Varsity Swim Team Coach OS</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        aqua: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                            950: '#042f2e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .active-tab { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: 700; }
-        .mini-cal-day { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border-radius: 50%; cursor: pointer; transition: all 0.15s; }
-        .mini-cal-day:hover:not(.empty-day) { background-color: #e2e8f0; }
-        .mini-cal-selected { background-color: #2563eb !important; color: white !important; font-weight: bold; }
-        .has-event::after { content: ''; display: block; width: 4px; height: 4px; background-color: #2563eb; border-radius: 50%; position: absolute; bottom: 2px; }
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(20, 184, 166, 0.6); }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 selection:bg-aqua-500 selection:text-white">
 
     <!-- Top Navigation Header -->
-    <header class="bg-slate-900 text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="p-2 bg-blue-600 rounded-lg text-white">
-                    <i class="fa-solid fa-person-swimming text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-lg leading-tight">Varsity Swim Team Manager</h1>
-                    <p class="text-xs text-slate-400">Attendance, Strength Training & Varsity Letter Tracker</p>
-                </div>
-            </div>
-
-            <!-- Stats Quick-View & Sync Badge -->
-            <div class="flex items-center space-x-6 text-xs">
-                <div class="hidden sm:flex space-x-4 border-r border-slate-700 pr-6">
-                    <div>
-                        <span class="text-slate-400 block">Total Swimmers</span>
-                        <span id="stat-total-swimmers" class="font-bold text-sm text-white">0</span>
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-2">
+                <!-- Brand Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-aqua-400 to-blue-600 flex items-center justify-center text-white shadow-md shadow-aqua-500/20 shrink-0">
+                        <i class="fa-solid fa-water-ladder text-xl"></i>
                     </div>
                     <div>
-                        <span class="text-slate-400 block">Varsity Qualified</span>
-                        <span id="stat-qualified" class="font-bold text-sm text-emerald-400">0</span>
-                    </div>
-                    <div>
-                        <span class="text-slate-400 block">At Risk / Pending</span>
-                        <span id="stat-at-risk" class="font-bold text-sm text-amber-400">0</span>
+                        <h1 class="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                            Aquatic Varsity <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-md bg-aqua-500/20 text-aqua-400 border border-aqua-500/30 font-semibold">Coach OS v3.0</span>
+                        </h1>
+                        <p class="text-[11px] text-slate-400 hidden sm:block">High School Swim & Dive Attendance, Strength & Varsity Lettering Portal</p>
                     </div>
                 </div>
 
-                <!-- Google Sheets Cloud Sync Controls -->
+                <!-- Sync Badge & Action Controls -->
                 <div class="flex items-center space-x-2">
-                    <span id="sync-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1.5">
-                        <i class="fa-solid fa-circle text-[8px]"></i> <span id="sync-status-text">Not Configured</span>
-                    </span>
-                    <button onclick="syncToCloud()" title="Sync with Google Sheets" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> <span class="hidden md:inline">Sync Now</span>
+                    <!-- Live Cloud Sync Status Badge -->
+                    <div id="cloud-status-badge" onclick="switchTab('reports')" class="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium cursor-pointer flex items-center gap-2 transition hover:bg-slate-700">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="sync-dot"></span>
+                        <span id="sync-status-text" class="hidden md:inline">Synced</span>
+                    </div>
+
+                    <button id="btn-sync-now" onclick="syncToCloud()" title="Sync with Cloud Sheets" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-rotate text-aqua-400" id="sync-icon"></i>
+                        <span class="hidden sm:inline">Sync Cloud</span>
+                    </button>
+
+                    <button onclick="exportToCSV()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i>
+                        <span class="hidden sm:inline">Export CSV</span>
+                    </button>
+
+                    <button onclick="openSheetsModal()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-table"></i>
+                        <span class="hidden sm:inline">Sheets Sync</span>
                     </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Tab Navigation Bar -->
-        <nav class="bg-slate-800 border-t border-slate-700">
-            <div class="max-w-7xl mx-auto px-4 flex space-x-1 sm:space-x-6 text-xs sm:text-sm overflow-x-auto">
-                <button onclick="switchTab('roster')" id="tab-btn-roster" class="py-3 px-3 active-tab whitespace-nowrap"><i class="fa-solid fa-users mr-1.5"></i>Roster Management</button>
-                <button onclick="switchTab('attendance')" id="tab-btn-attendance" class="py-3 px-3 text-slate-400 hover:text-white whitespace-nowrap"><i class="fa-solid fa-clipboard-user mr-1.5"></i>Practice & Meet Attendance</button>
-                <button onclick="switchTab('strength')" id="tab-btn-strength" class="py-3 px-3 text-slate-400 hover:text-white whitespace-nowrap"><i class="fa-solid fa-dumbbell mr-1.5"></i>Strength Training</button>
-                <button onclick="switchTab('schedule')" id="tab-btn-schedule" class="py-3 px-3 text-slate-400 hover:text-white whitespace-nowrap"><i class="fa-solid fa-calendar-days mr-1.5"></i>Schedule & Rotations</button>
-                <button onclick="switchTab('reports')" id="tab-btn-reports" class="py-3 px-3 text-slate-400 hover:text-white whitespace-nowrap"><i class="fa-solid fa-chart-column mr-1.5"></i>Reports & Export</button>
-                <button onclick="switchTab('settings')" id="tab-btn-settings" class="py-3 px-3 text-slate-400 hover:text-white whitespace-nowrap"><i class="fa-solid fa-gear mr-1.5"></i>Cloud Sync Settings</button>
-            </div>
-        </nav>
+            <!-- Tab Navigation Bar -->
+            <nav class="flex space-x-1 sm:space-x-3 overflow-x-auto border-t border-slate-800/80 py-2 custom-scrollbar">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-tab text-xs sm:text-sm font-medium px-3 py-2 rounded-lg flex items-center gap-2 transition whitespace-nowrap">
+                    <i class="fa-solid fa-chart-pie"></i> Varsity Summary
+                </button>
+                <button onclick="switchTab('attendance')" id="tab-attendance" class="nav-tab text-xs sm:text-sm font-medium px-3 py-2 rounded-lg flex items-center gap-2 transition whitespace-nowrap">
+                    <i class="fa-solid fa-clipboard-user"></i> Daily Attendance
+                </button>
+                <button onclick="switchTab('schedule')" id="tab-schedule" class="nav-tab text-xs sm:text-sm font-medium px-3 py-2 rounded-lg flex items-center gap-2 transition whitespace-nowrap">
+                    <i class="fa-regular fa-calendar-days"></i> Schedule & Rotations
+                </button>
+                <button onclick="switchTab('strength')" id="tab-strength" class="nav-tab text-xs sm:text-sm font-medium px-3 py-2 rounded-lg flex items-center gap-2 transition whitespace-nowrap">
+                    <i class="fa-solid fa-dumbbell"></i> Strength Training
+                </button>
+                <button onclick="switchTab('roster')" id="tab-roster" class="nav-tab text-xs sm:text-sm font-medium px-3 py-2 rounded-lg flex items-center gap-2 transition whitespace-nowrap">
+                    <i class="fa-solid fa-users"></i> Team Roster
+                </button>
+                <button onclick="switchTab('reports')" id="tab-reports" class="nav-tab text-xs sm:text-sm font-medium px-3 py-2 rounded-lg flex items-center gap-2 transition whitespace-nowrap">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Reports & Cloud
+                </button>
+            </nav>
+        </div>
     </header>
 
-    <!-- Main Application Container -->
-    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
-
-        <!-- Toast Alert Banner -->
-        <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2 max-w-sm pointer-events-none"></div>
-
-        <!-- TAB 1: ROSTER MANAGEMENT -->
-        <section id="view-roster" class="space-y-4">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <div class="relative flex-1 sm:w-64">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                        <input type="text" id="roster-search" oninput="renderRosterTable()" placeholder="Search name or PIN..." class="w-full pl-8 pr-3 py-1.5 border rounded-lg text-xs focus:ring-2 focus:ring-blue-500 border-slate-300">
-                    </div>
-                    <select id="roster-filter-type" onchange="renderRosterTable()" class="border rounded-lg px-2.5 py-1.5 text-xs border-slate-300">
-                        <option value="ALL">All Swimmer Types</option>
-                        <option value="Seasonal">Seasonal Swimmers</option>
-                        <option value="Club">Club Swimmers</option>
-                    </select>
+    <!-- Math Formula Specification Banner -->
+    <div id="formula-explanation-banner" class="bg-slate-900/90 border-b border-slate-800 backdrop-blur px-4 py-2.5 text-xs">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+            <div class="flex items-start gap-2.5">
+                <div class="p-1.5 bg-aqua-500/10 text-aqua-400 rounded-lg shrink-0 border border-aqua-500/20">
+                    <i class="fa-solid fa-calculator text-sm"></i>
                 </div>
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <button onclick="loadSampleData()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold border transition">
-                        <i class="fa-solid fa-flask mr-1"></i>Load Sample Team
-                    </button>
-                    <button onclick="openAddSwimmerModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition">
-                        <i class="fa-solid fa-user-plus mr-1"></i>Add Swimmer
-                    </button>
+                <div>
+                    <h3 class="font-semibold text-slate-100 flex items-center gap-2">
+                        Timezone-Safe Attendance & Penalty Formula Active
+                        <span class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">v3.0 Standard</span>
+                    </h3>
+                    <p class="text-slate-400 text-[11px] mt-0.5">
+                        <span class="text-aqua-300 font-medium">Club Swimmers:</span> Expected = Active Weeks × Commitment. Earned = <code class="bg-slate-950 px-1 py-0.5 rounded text-amber-300 font-mono text-[10px]">min(Present, Commitment) - NoComm</code> per week.
+                        <span class="mx-1 text-slate-600">|</span>
+                        <span class="text-aqua-300 font-medium">Seasonal Swimmers:</span> Expected = Mandatory Events from Start Date. <code class="bg-slate-950 px-1 py-0.5 rounded text-rose-300 font-mono text-[10px]">No Comm = -1 Net Credit</code>, <code class="bg-slate-950 px-1 py-0.5 rounded text-sky-300 font-mono text-[10px]">Excused = Exempt</code>.
+                    </p>
+                </div>
+            </div>
+            <button onclick="toggleFormulaModal()" class="shrink-0 text-[11px] text-aqua-400 hover:text-aqua-300 underline font-medium flex items-center gap-1">
+                <i class="fa-solid fa-circle-info"></i> Math Rules & Worked Examples
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Dynamic View Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 custom-scrollbar overflow-y-auto">
+
+        <!-- ================= DASHBOARD TAB ================= -->
+        <section id="content-dashboard" class="tab-content space-y-6">
+            <!-- Summary Metric Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Active Varsity Roster</p>
+                        <h3 id="stat-total-swimmers" class="text-2xl font-bold text-white mt-1">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5" id="stat-roster-breakdown">0 Seasonal • 0 Club</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Letter Qualified</p>
+                        <h3 id="stat-letter-qualified" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">≥85% Swim & ≥85% Strength</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-award"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Avg Swim Attendance</p>
+                        <h3 id="stat-avg-attendance" class="text-2xl font-bold text-aqua-400 mt-1">0%</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Timezone-synchronized score</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-lg bg-aqua-500/10 text-aqua-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Strength Compliance</p>
+                        <h3 id="stat-strength-compliance" class="text-2xl font-bold text-purple-400 mt-1">0%</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Weight room rotation compliance</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-dumbbell"></i>
+                    </div>
                 </div>
             </div>
 
-            <!-- Sortable Team Roster Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs">
-                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
-                            <tr>
-                                <th onclick="sortTable('lastName')" class="p-3 cursor-pointer hover:bg-slate-100 transition">Swimmer Name <span id="sort-icon-lastName">▲</span></th>
-                                <th onclick="sortTable('grade')" class="p-3 cursor-pointer hover:bg-slate-100 transition">Grade <span id="sort-icon-grade"></span></th>
-                                <th onclick="sortTable('gender')" class="p-3 cursor-pointer hover:bg-slate-100 transition">Gender <span id="sort-icon-gender"></span></th>
-                                <th onclick="sortTable('type')" class="p-3 cursor-pointer hover:bg-slate-100 transition">Category & Commitment <span id="sort-icon-type"></span></th>
-                                <th onclick="sortTable('swimPct')" class="p-3 cursor-pointer hover:bg-slate-100 transition text-center">Swim Att. % <span id="sort-icon-swimPct"></span></th>
-                                <th onclick="sortTable('strengthPct')" class="p-3 cursor-pointer hover:bg-slate-100 transition text-center">Strength % <span id="sort-icon-strengthPct"></span></th>
-                                <th onclick="sortTable('varsityStatus')" class="p-3 cursor-pointer hover:bg-slate-100 transition text-center">Varsity Letter <span id="sort-icon-varsityStatus"></span></th>
-                                <th class="p-3 text-center">PIN ID</th>
-                                <th class="p-3 text-right">Actions</th>
+            <!-- Varsity Performance & Matrix Table -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-trophy text-amber-400"></i> Varsity Status & Performance Matrix
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Click column headers to sort by Name, Grade, Category, Attendance %, Strength %, or Varsity Status.</p>
+                    </div>
+
+                    <!-- Category & Team Filters -->
+                    <div class="flex items-center gap-2 self-stretch sm:self-auto">
+                        <select id="filter-category" onchange="renderDashboardTable()" class="bg-slate-950 border border-slate-800 text-xs rounded-lg px-2.5 py-1.5 text-slate-300 focus:outline-none focus:border-aqua-500">
+                            <option value="ALL">All Categories</option>
+                            <option value="Seasonal">Seasonal Swimmers</option>
+                            <option value="Club">Club Swimmers</option>
+                        </select>
+                        <select id="filter-gender" onchange="renderDashboardTable()" class="bg-slate-950 border border-slate-800 text-xs rounded-lg px-2.5 py-1.5 text-slate-300 focus:outline-none focus:border-aqua-500">
+                            <option value="ALL">All Teams</option>
+                            <option value="Boys">Boys Team</option>
+                            <option value="Girls">Girls Team</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                                <th onclick="handleSort('dashboard', 'name')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                                    Name <span id="sort-dashboard-name" class="ml-1 text-[10px]">▲</span>
+                                </th>
+                                <th onclick="handleSort('dashboard', 'grade')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                                    Grade <span id="sort-dashboard-grade" class="ml-1 text-[10px]"></span>
+                                </th>
+                                <th onclick="handleSort('dashboard', 'type')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                                    Category / Commitment <span id="sort-dashboard-type" class="ml-1 text-[10px]"></span>
+                                </th>
+                                <th onclick="handleSort('dashboard', 'attendancePct')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                                    Swim Math Breakdown <span id="sort-dashboard-attendancePct" class="ml-1 text-[10px]"></span>
+                                </th>
+                                <th onclick="handleSort('dashboard', 'strengthPct')" class="p-3 cursor-pointer hover:text-white select-none transition text-center">
+                                    Strength % <span id="sort-dashboard-strengthPct" class="ml-1 text-[10px]"></span>
+                                </th>
+                                <th onclick="handleSort('dashboard', 'status')" class="p-3 cursor-pointer hover:text-white select-none transition text-right">
+                                    Varsity Status <span id="sort-dashboard-status" class="ml-1 text-[10px]"></span>
+                                </th>
                             </tr>
                         </thead>
-                        <tbody id="roster-tbody" class="divide-y divide-slate-100 text-slate-700">
-                            <!-- Dynamically populated -->
+                        <tbody id="table-dashboard-body" class="divide-y divide-slate-800/60 text-slate-300">
+                            <!-- Injected dynamically -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- TAB 2: PRACTICE & MEET ATTENDANCE -->
-        <section id="view-attendance" class="hidden space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                <!-- Mini Calendar Date Selector (Compact 320px) -->
-                <div class="md:col-span-4 lg:col-span-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200 max-w-xs mx-auto md:mx-0 w-full space-y-3">
-                    <div class="flex justify-between items-center border-b pb-2">
-                        <h2 class="font-bold text-sm text-slate-800">Select Practice Date</h2>
-                        <span id="cal-month-year" class="text-xs font-semibold text-blue-600">-- 2026</span>
-                    </div>
-
-                    <!-- Month Navigation -->
-                    <div class="flex justify-between items-center text-xs">
-                        <button onclick="changeCalMonth(-1)" class="p-1 hover:bg-slate-100 rounded text-slate-600"><i class="fa-solid fa-chevron-left"></i></button>
-                        <span id="cal-current-month-label" class="font-bold text-slate-700">October</span>
-                        <button onclick="changeCalMonth(1)" class="p-1 hover:bg-slate-100 rounded text-slate-600"><i class="fa-solid fa-chevron-right"></i></button>
-                    </div>
-
-                    <!-- Mini Calendar Grid -->
-                    <div class="grid grid-cols-7 gap-1 text-center font-semibold text-[11px] text-slate-400 border-b pb-1">
-                        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
-                    </div>
-                    <div id="mini-cal-grid" class="grid grid-cols-7 gap-1 justify-items-center">
-                        <!-- Mini calendar days generated here -->
-                    </div>
-
-                    <div class="pt-2 border-t text-[11px] text-slate-500 space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-blue-600 inline-block"></span>
-                            <span>Has Scheduled Event</span>
+        <!-- ================= ATTENDANCE TAB ================= -->
+        <section id="content-attendance" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Sidebar: Compact Mini Calendar Date Picker (Max 320px) -->
+                <div class="lg:col-span-4 xl:col-span-3 space-y-4">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm max-w-[320px] mx-auto lg:max-w-none">
+                        <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+                            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-day text-aqua-400"></i> Date Picker
+                            </h3>
+                            <button onclick="setTodayDate()" class="text-[11px] text-aqua-400 hover:underline font-medium">Today</button>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                            <span>Selected Date</span>
+
+                        <!-- Mini Calendar Component -->
+                        <div id="mini-calendar-container" class="space-y-2">
+                            <div class="flex items-center justify-between text-xs font-semibold text-slate-200 px-1">
+                                <button onclick="changeCalendarMonth(-1)" class="p-1 text-slate-400 hover:text-white"><i class="fa-solid fa-chevron-left"></i></button>
+                                <span id="calendar-month-year">October 2026</span>
+                                <button onclick="changeCalendarMonth(1)" class="p-1 text-slate-400 hover:text-white"><i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                            <div class="grid grid-cols-7 text-center text-[10px] font-semibold text-slate-500 uppercase py-1">
+                                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                            </div>
+                            <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 text-xs">
+                                <!-- Calendar days injected via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Date Summary Info Box -->
+                        <div class="mt-4 pt-3 border-t border-slate-800 text-xs space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Selected Date:</span>
+                                <span id="display-selected-date" class="font-mono font-semibold text-aqua-400">2026-10-08</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Event Type:</span>
+                                <span id="display-selected-event-type" class="px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 font-medium">Practice</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Event Attendance Logging Panel -->
-                <div class="md:col-span-8 lg:col-span-9 space-y-4">
-                    <div id="attendance-event-header" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3">
-                        <div>
-                            <span id="active-date-badge" class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 mb-1 inline-block">2026-10-08</span>
-                            <h2 id="active-event-title" class="text-base font-bold text-slate-800">No Scheduled Event</h2>
-                            <p id="active-event-sub" class="text-xs text-slate-500">Select a date with an event or create a new event for this date.</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="openAddEventModalForActiveDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
-                                <i class="fa-solid fa-plus mr-1"></i>Add Event to Date
+                    <!-- Batch Attendance Actions Card -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm max-w-[320px] mx-auto lg:max-w-none space-y-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Batch Date Actions</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="batchMarkAttendance('present')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-medium border border-emerald-500/30 transition text-left">
+                                <i class="fa-solid fa-check-double mr-1"></i> All Present
                             </button>
-                            <button onclick="markAllAttendance('present')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition">
-                                <i class="fa-solid fa-check-double mr-1"></i>Mark All Present
+                            <button onclick="batchMarkAttendance('absent_comm')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-medium border border-amber-500/30 transition text-left">
+                                <i class="fa-solid fa-envelope-open-text mr-1"></i> All Abs (Comm)
                             </button>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Swimmers Attendance Grid -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="p-3 bg-slate-50 border-b text-xs font-semibold text-slate-600 flex justify-between items-center">
-                            <span>Swimmer Attendance Status</span>
-                            <span class="text-[11px] text-slate-400">Status changes save automatically</span>
+                <!-- Right Column: Swimmer Attendance Logger Table -->
+                <div class="lg:col-span-8 xl:col-span-9 space-y-4">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div>
+                                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-list-check text-aqua-400"></i> Swimmer Attendance Log: <span id="attendance-active-date-label" class="text-aqua-400 font-mono">2026-10-08</span>
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Select status for each swimmer. Penalties and commitment totals update live.</p>
+                            </div>
+
+                            <input type="text" id="attendance-search" oninput="renderAttendanceTable()" placeholder="Search swimmer name..." class="bg-slate-950 border border-slate-800 text-xs rounded-lg px-3 py-1.5 text-slate-300 w-full sm:w-48 focus:outline-none focus:border-aqua-500">
                         </div>
-                        <div id="attendance-list-container" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
-                            <!-- Swimmers attendance cards -->
+
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                                        <th onclick="handleSort('attendance', 'name')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                                            Swimmer <span id="sort-attendance-name" class="ml-1 text-[10px]">▲</span>
+                                        </th>
+                                        <th onclick="handleSort('attendance', 'type')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                                            Category <span id="sort-attendance-type" class="ml-1 text-[10px]"></span>
+                                        </th>
+                                        <th class="p-3 text-center">Date Status</th>
+                                        <th onclick="handleSort('attendance', 'attendancePct')" class="p-3 text-right cursor-pointer hover:text-white select-none transition">
+                                            Season Swim % <span id="sort-attendance-attendancePct" class="ml-1 text-[10px]"></span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-attendance-body" class="divide-y divide-slate-800/60 text-slate-300">
+                                    <!-- Injected dynamically -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- TAB 3: STRENGTH TRAINING ROTATIONS -->
-        <section id="view-strength" class="hidden space-y-4">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3">
-                <div>
-                    <h2 class="font-bold text-base text-slate-800">Strength Training Rotations</h2>
-                    <p class="text-xs text-slate-500">Swimmers must complete 2 weight-room sessions on their own time per 2-week rotation block.</p>
-                </div>
-                <div class="flex items-center gap-3">
-                    <label class="text-xs font-semibold text-slate-600">Active Block:</label>
-                    <select id="strength-rotation-select" onchange="renderStrengthTable()" class="border rounded-lg px-3 py-1.5 text-xs font-semibold border-slate-300">
-                        <!-- Rotations populated dynamically -->
-                    </select>
-                </div>
-            </div>
+        <!-- ================= SCHEDULE TAB ================= -->
+        <section id="content-schedule" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Add Event & Rotation Cards -->
+                <div class="lg:col-span-4 space-y-4">
+                    <!-- Add Team Event Card -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                            <i class="fa-solid fa-calendar-plus text-aqua-400"></i> Add Team Event / Practice
+                        </h3>
 
-            <!-- Strength Completion Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
-                        <tr>
-                            <th class="p-3">Swimmer Name</th>
-                            <th class="p-3">Category</th>
-                            <th class="p-3 text-center">Session 1 (Weight Room)</th>
-                            <th class="p-3 text-center">Session 2 (Weight Room)</th>
-                            <th class="p-3 text-center">Rotation Completion</th>
-                            <th class="p-3 text-center">Overall Strength %</th>
-                        </tr>
-                    </thead>
-                    <tbody id="strength-tbody" class="divide-y divide-slate-100 text-slate-700">
-                        <!-- Dynamically populated -->
-                    </tbody>
-                </table>
+                        <form id="form-add-event" onsubmit="handleAddEvent(event)" class="space-y-3 text-xs">
+                            <div>
+                                <label class="block text-slate-400 mb-1">Event Title</label>
+                                <input type="text" id="event-title" required placeholder="e.g. Afternoon Swim Practice" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-slate-400 mb-1">Date</label>
+                                    <input type="date" id="event-date" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                                </div>
+                                <div>
+                                    <label class="block text-slate-400 mb-1">Type</label>
+                                    <select id="event-type" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                                        <option value="Practice">Swim Practice</option>
+                                        <option value="Meet">Swim Meet</option>
+                                        <option value="Holiday">Holiday / Optional Boost</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="flex items-center gap-2 text-slate-300 cursor-pointer pt-1">
+                                    <input type="checkbox" id="event-mandatory" checked class="rounded border-slate-800 bg-slate-950 text-aqua-500 focus:ring-0">
+                                    <span>Mandatory Attendance Unit</span>
+                                </label>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Mandatory events count towards expected units for seasonal swimmers.</p>
+                            </div>
+
+                            <button type="submit" class="w-full py-2 bg-aqua-600 hover:bg-aqua-500 text-white font-semibold rounded-lg shadow transition">
+                                Add Event to Schedule
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Add Strength Rotation Block Card -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                            <i class="fa-solid fa-clock-rotate-left text-purple-400"></i> Add Strength Rotation Block
+                        </h3>
+
+                        <form id="form-add-rotation" onsubmit="handleAddRotation(event)" class="space-y-3 text-xs">
+                            <div>
+                                <label class="block text-slate-400 mb-1">Rotation Block Name</label>
+                                <input type="text" id="rotation-name" required placeholder="e.g. Block 4: Hypertrophy Phase" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-slate-400 mb-1">Start Date</label>
+                                    <input type="date" id="rotation-start" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                                </div>
+                                <div>
+                                    <label class="block text-slate-400 mb-1">End Date</label>
+                                    <input type="date" id="rotation-end" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg shadow transition">
+                                Create Rotation Block
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Schedule Master List Table -->
+                <div class="lg:col-span-8 space-y-4">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="font-bold text-base text-white flex items-center gap-2">
+                                <i class="fa-regular fa-calendar-check text-aqua-400"></i> Team Schedule Master List
+                            </h3>
+                            <span id="event-count-badge" class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full border border-slate-700">0 Events</span>
+                        </div>
+
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                                        <th class="p-3">Date</th>
+                                        <th class="p-3">Title</th>
+                                        <th class="p-3">Category</th>
+                                        <th class="p-3 text-center">Mandatory</th>
+                                        <th class="p-3 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-schedule-body" class="divide-y divide-slate-800/60 text-slate-300">
+                                    <!-- Injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- TAB 4: SCHEDULE & ROTATION MANAGEMENT -->
-        <section id="view-schedule" class="hidden space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Practice & Meet Schedule Card -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                    <div class="flex justify-between items-center border-b pb-3">
-                        <h2 class="font-bold text-base text-slate-800"><i class="fa-solid fa-calendar-plus text-blue-600 mr-2"></i>Scheduled Swim Events</h2>
-                        <button onclick="openAddEventModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
-                            <i class="fa-solid fa-plus mr-1"></i>New Event
-                        </button>
+        <!-- ================= STRENGTH TAB ================= -->
+        <section id="content-strength" class="tab-content hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-dumbbell text-purple-400"></i> Weight Room Session Tracker (2 Sessions / Rotation Block)
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Check off completed strength sessions per rotation block for each swimmer.</p>
                     </div>
-                    <div id="schedule-events-list" class="space-y-2 max-h-96 overflow-y-auto">
-                        <!-- Events list -->
+
+                    <div class="text-xs text-slate-400 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg">
+                        Standard: <span class="text-purple-300 font-semibold">2 Sessions Per Block</span>
                     </div>
                 </div>
 
-                <!-- Strength Training Rotation Blocks Card -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                    <div class="flex justify-between items-center border-b pb-3">
-                        <h2 class="font-bold text-base text-slate-800"><i class="fa-solid fa-layer-group text-indigo-600 mr-2"></i>Strength Rotation Blocks</h2>
-                        <button onclick="openAddRotationModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
-                            <i class="fa-solid fa-plus mr-1"></i>New Block
-                        </button>
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr id="table-strength-header" class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                                <th onclick="handleSort('strength', 'name')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                                    Swimmer <span id="sort-strength-name" class="ml-1 text-[10px]">▲</span>
+                                </th>
+                                <!-- Dynamic Rotation Block Columns Injected Here -->
+                            </tr>
+                        </thead>
+                        <tbody id="table-strength-body" class="divide-y divide-slate-800/60 text-slate-300">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= ROSTER TAB ================= -->
+        <section id="content-roster" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Add Swimmer Form Card -->
+                <div class="lg:col-span-4 space-y-4">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                            <i class="fa-solid fa-user-plus text-aqua-400"></i> Add New Swimmer
+                        </h3>
+
+                        <form id="form-add-swimmer" onsubmit="handleAddSwimmer(event)" class="space-y-3 text-xs">
+                            <div>
+                                <label class="block text-slate-400 mb-1">Full Name</label>
+                                <input type="text" id="swimmer-name" required placeholder="e.g. Jordan Smith" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-slate-400 mb-1">Grade Level</label>
+                                    <select id="swimmer-grade" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                                        <option value="9">9th Grade (Freshman)</option>
+                                        <option value="10">10th Grade (Sophomore)</option>
+                                        <option value="11" selected>11th Grade (Junior)</option>
+                                        <option value="12">12th Grade (Senior)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-slate-400 mb-1">Gender Team</label>
+                                    <select id="swimmer-gender" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                                        <option value="Boys">Boys Team</option>
+                                        <option value="Girls">Girls Team</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-slate-400 mb-1">Swimmer Category</label>
+                                <select id="swimmer-type" onchange="toggleClubCommitmentInput()" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                                    <option value="Seasonal">Seasonal (Mandatory Team Practices)</option>
+                                    <option value="Club">Club Swimmer (Custom Commitment)</option>
+                                </select>
+                            </div>
+
+                            <div id="container-club-commitment" class="hidden space-y-1">
+                                <label class="block text-slate-400">Weekly Club Practice Commitment</label>
+                                <select id="swimmer-commitment" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                                    <option value="1">1 Practice per Week</option>
+                                    <option value="2" selected>2 Practices per Week</option>
+                                    <option value="3">3 Practices per Week</option>
+                                    <option value="4">4 Practices per Week</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-slate-400 mb-1">Season Join / Start Date</label>
+                                <input type="date" id="swimmer-startdate" value="2026-10-01" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-aqua-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-slate-400 mb-1">Swimmer 4-Digit PIN (Portal Security)</label>
+                                <input type="text" id="swimmer-pin" maxlength="4" placeholder="Auto-generated if empty" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-slate-200 focus:outline-none focus:border-aqua-500">
+                            </div>
+
+                            <button type="submit" class="w-full py-2 bg-aqua-600 hover:bg-aqua-500 text-white font-semibold rounded-lg shadow transition">
+                                Add Swimmer to Roster
+                            </button>
+                        </form>
                     </div>
-                    <div id="schedule-rotations-list" class="space-y-2 max-h-96 overflow-y-auto">
-                        <!-- Rotations list -->
+                </div>
+
+                <!-- Roster Table -->
+                <div class="lg:col-span-8 space-y-4">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="font-bold text-base text-white flex items-center gap-2">
+                                <i class="fa-solid fa-users text-aqua-400"></i> Swimmer Roster & PIN Management
+                            </h3>
+                            <span id="roster-count-badge" class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full border border-slate-700">0 Swimmers</span>
+                        </div>
+
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                                        <th onclick="handleSort('roster', 'name')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                                            Name <span id="sort-roster-name" class="ml-1 text-[10px]">▲</span>
+                                        </th>
+                                        <th onclick="handleSort('roster', 'grade')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                                            Grade <span id="sort-roster-grade" class="ml-1 text-[10px]"></span>
+                                        </th>
+                                        <th onclick="handleSort('roster', 'gender')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                                            Team <span id="sort-roster-gender" class="ml-1 text-[10px]"></span>
+                                        </th>
+                                        <th onclick="handleSort('roster', 'type')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                                            Category <span id="sort-roster-type" class="ml-1 text-[10px]"></span>
+                                        </th>
+                                        <th class="p-3">PIN</th>
+                                        <th class="p-3 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-roster-body" class="divide-y divide-slate-800/60 text-slate-300">
+                                    <!-- Injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- TAB 5: REPORTS & CSV EXPORT -->
-        <section id="view-reports" class="hidden space-y-4">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
-                <div>
-                    <h2 class="font-bold text-base text-slate-800">Varsity Qualification Summary & Reports</h2>
-                    <p class="text-xs text-slate-500">85% Swim Attendance + 85% Strength Training required for a Varsity Letter.</p>
-                </div>
-                <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm transition">
-                    <i class="fa-solid fa-file-csv text-sm"></i> Export Full CSV Report
-                </button>
-            </div>
+        <!-- ================= REPORTS & CLOUD SYNC TAB ================= -->
+        <section id="content-reports" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Cloud Web App Config Box -->
+                <div class="lg:col-span-6 space-y-4">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+                            <h3 class="font-bold text-base text-white flex items-center gap-2">
+                                <i class="fa-solid fa-cloud text-emerald-400"></i> Google Sheets & Portal Synchronization
+                            </h3>
+                            <span id="cloud-sync-status-indicator" class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
+                                Local Storage
+                            </span>
+                        </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
-                        <tr>
-                            <th class="p-3">Swimmer</th>
-                            <th class="p-3">Type</th>
-                            <th class="p-3 text-center">Expected Practices</th>
-                            <th class="p-3 text-center">Attendance Credit Score</th>
-                            <th class="p-3 text-center">Swim %</th>
-                            <th class="p-3 text-center">Strength %</th>
-                            <th class="p-3 text-center">Letter Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reports-tbody" class="divide-y divide-slate-100 text-slate-700">
-                        <!-- Dynamically populated -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Connect your Google Apps Script Web App URL to sync live swim attendance, strength records, and pre-calculated scores directly to your Google Sheet and Swimmer Portal.
+                        </p>
 
-        <!-- TAB 6: GOOGLE APPS SCRIPT CLOUD BACKUP SETTINGS -->
-        <section id="view-settings" class="hidden space-y-6 max-w-4xl mx-auto">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                <div class="border-b pb-3">
-                    <h2 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-cloud text-blue-600 mr-2"></i>Google Sheets Apps Script API Integration</h2>
-                    <p class="text-xs text-slate-500">Connect your web app to Google Sheets to backup roster data and power the Swimmer Portal.</p>
-                </div>
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="block text-slate-400 mb-1 font-medium">Google Apps Script Web App URL</label>
+                                <input type="url" id="cloud-webapp-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 font-mono text-slate-200 focus:outline-none focus:border-emerald-500">
+                            </div>
 
-                <div class="space-y-3">
-                    <label class="block text-xs font-bold text-slate-700">Google Apps Script Web App Deployment URL</label>
-                    <div class="flex gap-2">
-                        <input type="url" id="setting-script-url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="flex-1 border rounded-lg px-3 py-2 text-xs border-slate-300 focus:ring-2 focus:ring-blue-500 font-mono">
-                        <button onclick="saveCloudSettings()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-semibold transition">
-                            Save & Test Sync
-                        </button>
+                            <div class="flex items-center justify-between pt-1">
+                                <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+                                    <input type="checkbox" id="cloud-autosync" onchange="toggleAutoSync(this.checked)" checked class="rounded border-slate-800 bg-slate-950 text-emerald-500 focus:ring-0">
+                                    <span>Auto-sync changes to cloud</span>
+                                </label>
+
+                                <button onclick="saveCloudSettings()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg text-xs border border-slate-700 transition">
+                                    Save Config
+                                </button>
+                            </div>
+
+                            <div class="pt-2 flex items-center gap-2">
+                                <button onclick="syncToCloud()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg shadow transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Sync to Cloud Now
+                                </button>
+                                <button onclick="openGasHelpModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs border border-slate-700 transition">
+                                    GAS Instructions
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <p id="settings-sync-message" class="text-xs font-medium hidden"></p>
+
+                    <!-- Local Testing & Demo Data Reset -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
+                        <h4 class="font-bold text-sm text-white flex items-center gap-2 border-b border-slate-800 pb-2">
+                            <i class="fa-solid fa-vial-circle-check text-aqua-400"></i> Testing & Demo Data Controls
+                        </h4>
+                        <p class="text-xs text-slate-400">Load sample varsity swimmer roster and practice schedules for instant testing.</p>
+                        <div class="flex items-center gap-2 pt-1">
+                            <button onclick="loadSampleData()" class="px-3 py-2 bg-aqua-600/20 hover:bg-aqua-600/30 text-aqua-300 border border-aqua-500/30 font-semibold rounded-lg text-xs transition">
+                                <i class="fa-solid fa-arrows-rotate mr-1"></i> Reset / Load Demo Data
+                            </button>
+                            <button onclick="clearAllData()" class="px-3 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 font-semibold rounded-lg text-xs transition">
+                                <i class="fa-solid fa-trash mr-1"></i> Purge Local Database
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Setup Instructions Accordion -->
-                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-2">
-                    <h3 class="font-bold text-slate-800"><i class="fa-solid fa-circle-info text-blue-600 mr-1"></i>Google Apps Script Setup Instructions:</h3>
-                    <ol class="list-decimal pl-5 space-y-1">
-                        <li>Open a Google Sheet and click <strong>Extensions > Apps Script</strong>.</li>
-                        <li>Paste the provided <code>Code.gs</code> backend script into the editor.</li>
-                        <li>Click <strong>Deploy > New Deployment</strong>. Select type <strong>Web App</strong>.</li>
-                        <li>Set <em>Execute as</em>: <strong>Me</strong> and <em>Who has access</em>: <strong>Anyone</strong>.</li>
-                        <li>Copy the generated Web App URL and paste it into the field above.</li>
-                    </ol>
+                <!-- Export & Copy Actions Box -->
+                <div class="lg:col-span-6 space-y-4">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                        <h3 class="font-bold text-base text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                            <i class="fa-solid fa-file-export text-aqua-400"></i> Spreadsheet Export Options
+                        </h3>
+
+                        <div class="space-y-3 text-xs">
+                            <button onclick="copyToClipboardTSV()" class="w-full p-3.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-left flex items-center justify-between transition group">
+                                <div>
+                                    <div class="font-semibold text-emerald-400 group-hover:underline">Copy TSV Buffer to Clipboard</div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5">Paste directly into Cell A1 of any Google Sheet</div>
+                                </div>
+                                <i class="fa-regular fa-copy text-slate-400 text-lg"></i>
+                            </button>
+
+                            <button onclick="exportToCSV()" class="w-full p-3.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-left flex items-center justify-between transition group">
+                                <div>
+                                    <div class="font-semibold text-aqua-400 group-hover:underline">Download Varsity Roster (.CSV)</div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5">Compatible with Excel, Google Sheets, & Numbers</div>
+                                </div>
+                                <i class="fa-solid fa-download text-slate-400 text-lg"></i>
+                            </button>
+                        </div>
+
+                        <div id="reports-toast" class="hidden p-3 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs text-center font-semibold">
+                            TSV Buffer copied! Paste into Google Sheets with Ctrl+V / Cmd+V.
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- MODAL 1: ADD / EDIT SWIMMER -->
-    <div id="swimmer-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 id="swimmer-modal-title" class="font-bold text-base text-slate-800">Add New Swimmer</h3>
-                <button onclick="closeSwimmerModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form id="swimmer-form" onsubmit="saveSwimmer(event)" class="space-y-3 text-xs">
-                <input type="hidden" id="swimmer-id">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1">First Name</label>
-                        <input type="text" id="swimmer-firstname" required class="w-full border rounded-lg p-2 border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1">Last Name</label>
-                        <input type="text" id="swimmer-lastname" required class="w-full border rounded-lg p-2 border-slate-300">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1">Grade Level</label>
-                        <select id="swimmer-grade" class="w-full border rounded-lg p-2 border-slate-300">
-                            <option value="9">9th Grade (Freshman)</option>
-                            <option value="10">10th Grade (Sophomore)</option>
-                            <option value="11">11th Grade (Junior)</option>
-                            <option value="12">12th Grade (Senior)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1">Gender Team</label>
-                        <select id="swimmer-gender" class="w-full border rounded-lg p-2 border-slate-300">
-                            <option value="Girls">Girls Varsity</option>
-                            <option value="Boys">Boys Varsity</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1">Swimmer Category</label>
-                        <select id="swimmer-type" onchange="toggleCommitmentDropdown()" class="w-full border rounded-lg p-2 border-slate-300">
-                            <option value="Seasonal">Seasonal Swimmer</option>
-                            <option value="Club">Club Swimmer</option>
-                        </select>
-                    </div>
-                    <div id="commitment-container" class="hidden">
-                        <label class="block font-semibold text-slate-600 mb-1">Weekly Commitment</label>
-                        <select id="swimmer-commitment" class="w-full border rounded-lg p-2 border-slate-300">
-                            <option value="1">1 Practice / Week</option>
-                            <option value="2" selected>2 Practices / Week</option>
-                            <option value="3">3 Practices / Week</option>
-                            <option value="4">4 Practices / Week</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1">Season Start Date</label>
-                        <input type="date" id="swimmer-startdate" required class="w-full border rounded-lg p-2 border-slate-300">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1">4-Digit Self-Service PIN</label>
-                        <input type="text" id="swimmer-pin" maxlength="4" pattern="\d{4}" placeholder="1234" required class="w-full border rounded-lg p-2 border-slate-300 font-mono tracking-wider text-center">
-                    </div>
-                </div>
-                <div class="flex justify-end gap-2 border-t pt-3 mt-4">
-                    <button type="button" onclick="closeSwimmerModal()" class="px-4 py-2 border rounded-lg text-slate-600 hover:bg-slate-100">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">Save Swimmer</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- ================= MODALS ================= -->
 
-    <!-- MODAL 2: SAFETY CONFIRMATION ON SWIMMER DELETION -->
-    <div id="delete-confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
-            <div class="flex items-center gap-3 text-rose-600">
-                <div class="p-3 bg-rose-100 rounded-full">
-                    <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="font-bold text-base text-slate-800">Confirm Swimmer Deletion</h3>
-                    <p class="text-xs text-slate-500">This action cannot be undone.</p>
+    <!-- Swimmer Safety Deletion Modal -->
+    <div id="modal-delete-swimmer" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-rose-400 flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Safety Delete Confirmation
+                </h3>
+                <button onclick="closeDeleteModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-300">
+                <p class="text-slate-200">Are you sure you want to permanently delete this swimmer from the varsity roster? This action cannot be undone.</p>
+
+                <div id="delete-swimmer-details" class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-1.5">
+                    <!-- Populated dynamically -->
                 </div>
             </div>
 
-            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs space-y-1">
-                <p class="font-bold text-slate-800" id="delete-swimmer-name">--</p>
-                <p class="text-slate-500" id="delete-swimmer-info">--</p>
-            </div>
-
-            <p class="text-xs text-slate-600">
-                Are you sure you want to permanently delete this swimmer? All associated practice attendance logs and strength rotation records will also be removed.
-            </p>
-
-            <div class="flex justify-end gap-2 border-t pt-3">
-                <button onclick="closeDeleteModal()" class="px-4 py-2 border rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
-                <button onclick="executeSwimmerDeletion()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
-                    <i class="fa-solid fa-trash-can mr-1"></i>Confirm Delete
+            <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold">Cancel</button>
+                <button id="btn-confirm-delete" onclick="executeDeleteSwimmer()" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-user-minus"></i> Confirm Delete
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL 3: ADD EVENT -->
-    <div id="event-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-sm w-full p-6 space-y-4">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-base text-slate-800">Add Swim Event</h3>
-                <button onclick="closeEventModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <!-- Math Formula Specification Modal -->
+    <div id="modal-formula" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-aqua-400"></i> Attendance & Penalty Mathematical Engine
+                </h3>
+                <button onclick="toggleFormulaModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form onsubmit="saveEvent(event)" class="space-y-3 text-xs">
-                <div>
-                    <label class="block font-semibold text-slate-600 mb-1">Event Title</label>
-                    <input type="text" id="event-title" placeholder="Afternoon Practice" required class="w-full border rounded-lg p-2 border-slate-300">
+
+            <div class="space-y-4 text-xs text-slate-300 leading-relaxed">
+                <!-- Club Swimmers -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-aqua-400 uppercase tracking-wider text-[11px]">Club Swimmers Standard</span>
+                        <span class="bg-aqua-500/10 text-aqua-400 px-2 py-0.5 rounded text-[10px] border border-aqua-500/20">Commitment Based</span>
+                    </div>
+                    <p class="font-mono text-amber-300 bg-slate-900 p-2 rounded border border-slate-800 text-[11px]">
+                        Attendance % = clamp(0, 100, round(( Total Net Earned / (Active Weeks × Commitment) ) × 100))
+                    </p>
+                    <ul class="list-disc list-inside space-y-1 text-slate-400 pl-1">
+                        <li><strong class="text-slate-200">Active Weeks:</strong> Number of unique calendar weeks active in system starting from Join Date.</li>
+                        <li><strong class="text-slate-200">Weekly Credit:</strong> <code class="text-emerald-300">min(Present Count, Commitment) - (NoComm Count × 1)</code></li>
+                        <li><strong class="text-slate-200">Timezone Protection:</strong> Dates are parsed at local midnight to ensure server & browser alignment.</li>
+                    </ul>
                 </div>
-                <div>
-                    <label class="block font-semibold text-slate-600 mb-1">Event Date</label>
-                    <input type="date" id="event-date" required class="w-full border rounded-lg p-2 border-slate-300">
+
+                <!-- Seasonal Swimmers -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-aqua-400 uppercase tracking-wider text-[11px]">Seasonal Swimmers Standard</span>
+                        <span class="bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded text-[10px] border border-purple-500/20">Schedule Based</span>
+                    </div>
+                    <p class="font-mono text-amber-300 bg-slate-900 p-2 rounded border border-slate-800 text-[11px]">
+                        Attendance % = clamp(0, 100, round(( Net Score / Expected Mandatory Events ) × 100))
+                    </p>
+                    <ul class="list-disc list-inside space-y-1 text-slate-400 pl-1">
+                        <li><strong class="text-slate-200">Present (+1):</strong> +1 Earned Credit</li>
+                        <li><strong class="text-slate-200">Absent Comm (0):</strong> 0 Earned Credits (out of 1 expected)</li>
+                        <li><strong class="text-slate-200">No Comm (-1):</strong> -1 Net Credit (Double penalty deduction)</li>
+                        <li><strong class="text-slate-200">Excused:</strong> Exempt (reduces total expected mandatory count by 1)</li>
+                        <li><strong class="text-slate-200">Holiday / Bonus (+1):</strong> +1 Bonus Credit if present (does not increase expected count)</li>
+                    </ul>
                 </div>
-                <div>
-                    <label class="block font-semibold text-slate-600 mb-1">Event Type</label>
-                    <select id="event-type" class="w-full border rounded-lg p-2 border-slate-300">
-                        <option value="Practice">Swim Practice</option>
-                        <option value="Meet">Swim Meet</option>
-                        <option value="Holiday/Break">Holiday/Break Optional Practice</option>
-                    </select>
+
+                <!-- Varsity Qualification -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                    <span class="font-bold text-emerald-400 uppercase tracking-wider text-[11px]">Varsity Letter Criteria</span>
+                    <ul class="list-disc list-inside space-y-1 text-slate-400 pl-1">
+                        <li><strong class="text-emerald-400">Qualified:</strong> Swim Attendance ≥ 85% AND Strength Compliance ≥ 85%</li>
+                        <li><strong class="text-amber-400">At Risk:</strong> Swim Attendance ≥ 75% AND Strength Compliance ≥ 75% (Below 85%)</li>
+                        <li><strong class="text-rose-400">Ineligible:</strong> Either Swim or Strength < 75%</li>
+                    </ul>
                 </div>
-                <div class="flex items-center gap-2 pt-1">
-                    <input type="checkbox" id="event-optional" class="rounded text-blue-600">
-                    <label for="event-optional" class="text-slate-600">Optional Practice (Bonus credit, no non-attendance penalty)</label>
-                </div>
-                <div class="flex justify-end gap-2 border-t pt-3 mt-4">
-                    <button type="button" onclick="closeEventModal()" class="px-4 py-2 border rounded-lg text-slate-600 hover:bg-slate-100">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">Add Event</button>
-                </div>
-            </form>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 flex justify-end">
+                <button onclick="toggleFormulaModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold">Close Modal</button>
+            </div>
         </div>
     </div>
 
-    <!-- MODAL 4: ADD ROTATION BLOCK -->
-    <div id="rotation-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-sm w-full p-6 space-y-4">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-base text-slate-800">Add Strength Rotation Block</h3>
-                <button onclick="closeRotationModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <!-- Google Sheets TSV Sync Modal -->
+    <div id="modal-sheets" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-table text-emerald-400"></i> Google Sheets TSV Buffer Export
+                </h3>
+                <button onclick="closeSheetsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form onsubmit="saveRotation(event)" class="space-y-3 text-xs">
-                <div>
-                    <label class="block font-semibold text-slate-600 mb-1">Rotation Block Name</label>
-                    <input type="text" id="rotation-title" placeholder="Block 1: Nov 1 - Nov 14" required class="w-full border rounded-lg p-2 border-slate-300">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
+
+            <p class="text-xs text-slate-300">
+                Copy tab-separated buffer to clipboard and paste directly into your Google Sheets spreadsheet.
+            </p>
+
+            <div class="space-y-3 text-xs">
+                <button onclick="copyToClipboardTSV()" class="w-full p-3.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-left flex items-center justify-between transition group">
                     <div>
-                        <label class="block font-semibold text-slate-600 mb-1">Start Date</label>
-                        <input type="date" id="rotation-start" required class="w-full border rounded-lg p-2 border-slate-300">
+                        <div class="font-semibold text-emerald-400 group-hover:underline">Copy Table Buffer to Clipboard</div>
+                        <div class="text-[11px] text-slate-400">Contains computed percentages, net scores, & varsity status</div>
                     </div>
-                    <div>
-                        <label class="block font-semibold text-slate-600 mb-1">End Date</label>
-                        <input type="date" id="rotation-end" required class="w-full border rounded-lg p-2 border-slate-300">
-                    </div>
-                </div>
-                <div class="flex justify-end gap-2 border-t pt-3 mt-4">
-                    <button type="button" onclick="closeRotationModal()" class="px-4 py-2 border rounded-lg text-slate-600 hover:bg-slate-100">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700">Add Block</button>
-                </div>
-            </form>
+                    <i class="fa-regular fa-copy text-slate-400 text-base"></i>
+                </button>
+            </div>
+
+            <div id="modal-sheets-toast" class="hidden p-2.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs text-center font-medium">
+                Data copied! Open Google Sheets and press Ctrl+V / Cmd+V.
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 flex justify-end">
+                <button onclick="closeSheetsModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold">Done</button>
+            </div>
         </div>
     </div>
 
-    <!-- APPLICATION JAVASCRIPT STATE ENGINE -->
+    <!-- Google Apps Script Guidance Modal -->
+    <div id="modal-gas-help" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-code text-aqua-400"></i> Google Apps Script Deployment
+                </h3>
+                <button onclick="closeGasHelpModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="text-xs text-slate-300 space-y-3">
+                <p>To enable 2-way cloud sync with your Google Sheet, create a new script under <strong>Extensions &gt; Apps Script</strong> in Google Sheets and paste this handler:</p>
+
+                <pre class="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[10px] text-emerald-300 overflow-x-auto select-all">
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    sheet.clear();
+    sheet.appendRow(["ID", "Name", "Grade", "Team", "Category", "PIN", "Swim Att %", "Strength %", "Varsity Status"]);
+    
+    data.swimmers.forEach(function(s) {
+      var stats = s.computedStats || {};
+      sheet.appendRow([s.id, s.name, s.grade, s.gender, s.type, s.pin, stats.attPct + "%", stats.strPct + "%", stats.status]);
+    });
+    
+    return ContentService.createTextOutput(JSON.stringify({status: "success"}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({status: "error", message: err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+                <p class="text-[11px] text-slate-400">Deploy as Web App, execute as "Me", and set access to "Anyone". Paste the deployment URL in Coach OS Reports tab.</p>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 flex justify-end">
+                <button onclick="closeGasHelpModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold">Understood</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
     <script>
-        // Global State Model
+        // Storage Keys
+        const STORAGE_KEY_SWIMMERS = 'varsity_swim_swimmers_v3';
+        const STORAGE_KEY_EVENTS = 'varsity_swim_events_v3';
+        const STORAGE_KEY_ATTENDANCE = 'varsity_swim_attendance_v3';
+        const STORAGE_KEY_ROTATIONS = 'varsity_swim_rotations_v3';
+        const STORAGE_KEY_STRENGTH = 'varsity_swim_strength_v3';
+        const STORAGE_KEY_CONFIG = 'varsity_swim_config_v3';
+
+        // Default Data Set
+        const DEFAULT_SWIMMERS = [
+            { id: 'sw_1', name: 'Alex Rivera', grade: 11, gender: 'Boys', type: 'Club', clubCommitment: 2, startDate: '2026-10-01', pin: '4182' },
+            { id: 'sw_2', name: 'Sarah Chen', grade: 12, gender: 'Girls', type: 'Seasonal', clubCommitment: 2, startDate: '2026-10-01', pin: '8921' },
+            { id: 'sw_3', name: 'Marcus Johnson', grade: 10, gender: 'Boys', type: 'Club', clubCommitment: 3, startDate: '2026-10-01', pin: '1049' },
+            { id: 'sw_4', name: 'Emily Davis', grade: 11, gender: 'Girls', type: 'Seasonal', clubCommitment: 2, startDate: '2026-10-01', pin: '5532' },
+            { id: 'sw_5', name: 'Ryan Patel', grade: 9, gender: 'Boys', type: 'Club', clubCommitment: 1, startDate: '2026-10-01', pin: '3310' },
+            { id: 'sw_6', name: 'Jessica Taylor', grade: 12, gender: 'Girls', type: 'Seasonal', clubCommitment: 2, startDate: '2026-10-01', pin: '7204' }
+        ];
+
+        const DEFAULT_EVENTS = [
+            { id: 'ev_1', title: 'Season Kickoff Practice', date: '2026-10-01', type: 'Practice', mandatory: true },
+            { id: 'ev_2', title: 'Technique & Aerobic Set', date: '2026-10-03', type: 'Practice', mandatory: true },
+            { id: 'ev_3', title: 'Pace & Sprints Session', date: '2026-10-06', type: 'Practice', mandatory: true },
+            { id: 'ev_4', title: 'Varsity Dual Meet vs Oakridge', date: '2026-10-08', type: 'Meet', mandatory: true },
+            { id: 'ev_5', title: 'Endurance & Recovery', date: '2026-10-10', type: 'Practice', mandatory: true },
+            { id: 'ev_6', title: 'Holiday Sprint Boost', date: '2026-10-12', type: 'Holiday', mandatory: false }
+        ];
+
+        const DEFAULT_ROTATIONS = [
+            { id: 'rot_1', name: 'Rotation 1 (Oct 01 - Oct 14)', startDate: '2026-10-01', endDate: '2026-10-14' },
+            { id: 'rot_2', name: 'Rotation 2 (Oct 15 - Oct 28)', startDate: '2026-10-15', endDate: '2026-10-28' },
+            { id: 'rot_3', name: 'Rotation 3 (Oct 29 - Nov 11)', startDate: '2026-10-29', endDate: '2026-11-11' }
+        ];
+
+        const DEFAULT_ATTENDANCE = {
+            'sw_1_2026-10-01': 'present',
+            'sw_1_2026-10-03': 'present',
+            'sw_1_2026-10-06': 'present',
+            'sw_1_2026-10-08': 'no_comm',
+
+            'sw_2_2026-10-01': 'present',
+            'sw_2_2026-10-03': 'present',
+            'sw_2_2026-10-06': 'present',
+            'sw_2_2026-10-08': 'present',
+
+            'sw_3_2026-10-01': 'present',
+            'sw_3_2026-10-03': 'absent_comm',
+            'sw_3_2026-10-06': 'present',
+            'sw_3_2026-10-08': 'present',
+
+            'sw_4_2026-10-01': 'present',
+            'sw_4_2026-10-03': 'excused',
+            'sw_4_2026-10-06': 'present',
+            'sw_4_2026-10-08': 'present'
+        };
+
+        const DEFAULT_STRENGTH = {
+            'sw_1_rot_1_s1': true, 'sw_1_rot_1_s2': true,
+            'sw_2_rot_1_s1': true, 'sw_2_rot_1_s2': true,
+            'sw_3_rot_1_s1': true, 'sw_3_rot_1_s2': false,
+            'sw_4_rot_1_s1': true, 'sw_4_rot_1_s2': true
+        };
+
+        // Application State Object
         let state = {
             swimmers: [],
             events: [],
-            attendance: {},
             rotations: [],
+            attendance: {},
             strength: {},
-            settings: {
-                scriptUrl: '',
-                lastSynced: null
+            config: {
+                webAppUrl: '',
+                autoSync: true
+            },
+            selectedDate: '2026-10-08',
+            calendarMonth: 9, // Oct (0-indexed)
+            calendarYear: 2026,
+            activeTab: 'dashboard',
+            pendingDeleteSwimmerId: null,
+            sort: {
+                dashboard: { col: 'name', dir: 'asc' },
+                attendance: { col: 'name', dir: 'asc' },
+                strength: { col: 'name', dir: 'asc' },
+                roster: { col: 'name', dir: 'asc' }
             }
         };
 
-        // Active UI State
-        let activeTab = 'roster';
-        let activeDate = new Date().toISOString().split('T')[0];
-        let calYear = new Date().getFullYear();
-        let calMonth = new Date().getMonth();
-        let swimmerToDeleteId = null;
+        /**
+         * TIMEZONE PROTECTION HELPER
+         * Converts date string 'YYYY-MM-DD' into local midnight Date object
+         */
+        function parseLocalDate(dateStr) {
+            if (!dateStr) return new Date();
+            const parts = dateStr.split('-');
+            if (parts.length < 3) return new Date();
+            return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
+        }
 
-        // Sorting State
-        let currentSortColumn = 'lastName';
-        let currentSortDirection = 'asc';
+        /**
+         * Formats local Date object to 'YYYY-MM-DD'
+         */
+        function formatLocalDate(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
 
-        // Initialize App
-        document.addEventListener("DOMContentLoaded", () => {
-            loadLocalState();
-            renderAll();
-        });
+        /**
+         * Calculates deterministic week key (YYYY-Wxx) using local midnight
+         */
+        function getWeekKey(dateStr) {
+            const d = parseLocalDate(dateStr);
+            const dayNum = d.getDay() || 7;
+            d.setDate(d.getDate() + 4 - dayNum);
+            const yearStart = new Date(d.getFullYear(), 0, 1);
+            const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            return `${d.getFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+        }
 
-        // Save State to LocalStorage & Optional Cloud Auto Sync
+        /**
+         * Generates random 4-digit PIN for swimmer
+         */
+        function generateRandomPIN() {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        function loadState() {
+            try {
+                const sSwimmers = localStorage.getItem(STORAGE_KEY_SWIMMERS);
+                const sEvents = localStorage.getItem(STORAGE_KEY_EVENTS);
+                const sRotations = localStorage.getItem(STORAGE_KEY_ROTATIONS);
+                const sAttendance = localStorage.getItem(STORAGE_KEY_ATTENDANCE);
+                const sStrength = localStorage.getItem(STORAGE_KEY_STRENGTH);
+                const sConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
+
+                state.swimmers = sSwimmers ? JSON.parse(sSwimmers) : DEFAULT_SWIMMERS;
+                state.events = sEvents ? JSON.parse(sEvents) : DEFAULT_EVENTS;
+                state.rotations = sRotations ? JSON.parse(sRotations) : DEFAULT_ROTATIONS;
+                state.attendance = sAttendance ? JSON.parse(sAttendance) : DEFAULT_ATTENDANCE;
+                state.strength = sStrength ? JSON.parse(sStrength) : DEFAULT_STRENGTH;
+                state.config = sConfig ? JSON.parse(sConfig) : { webAppUrl: '', autoSync: true };
+
+                // Ensure every swimmer has a PIN
+                state.swimmers.forEach(s => {
+                    if (!s.pin) s.pin = generateRandomPIN();
+                });
+            } catch (e) {
+                console.error("Error loading state:", e);
+                state.swimmers = DEFAULT_SWIMMERS;
+                state.events = DEFAULT_EVENTS;
+                state.rotations = DEFAULT_ROTATIONS;
+                state.attendance = DEFAULT_ATTENDANCE;
+                state.strength = DEFAULT_STRENGTH;
+                state.config = { webAppUrl: '', autoSync: true };
+            }
+        }
+
         function saveState() {
-            localStorage.setItem('swim_team_app_state', JSON.stringify(state));
-            updateStatsHeader();
-        }
+            // Precompute computedStats on all swimmers before persisting
+            state.swimmers.forEach(s => {
+                const att = calculateSwimmerAttendance(s);
+                const str = calculateSwimmerStrength(s);
+                const vst = calculateVarsityStatus(att.pct, str.pct);
 
-        // Load Local Storage
-        function loadLocalState() {
-            const saved = localStorage.getItem('swim_team_app_state');
-            if (saved) {
-                try {
-                    state = JSON.parse(saved);
-                } catch(e) {
-                    console.error("Failed to parse local state", e);
-                }
-            }
-            if (state.settings.scriptUrl) {
-                document.getElementById('setting-script-url').value = state.settings.scriptUrl;
-                updateSyncStatus('configured', 'Ready to Sync');
-            }
-        }
-
-        // Load Demo Data for Instant Testing
-        function loadSampleData() {
-            state.swimmers = [
-                { id: 'S101', firstName: 'Emma', lastName: 'Johnson', grade: '11', gender: 'Girls', type: 'Seasonal', commitment: 4, startDate: '2026-10-01', pin: '1001' },
-                { id: 'S102', firstName: 'Liam', lastName: 'Smith', grade: '12', gender: 'Boys', type: 'Seasonal', commitment: 4, startDate: '2026-10-01', pin: '1002' },
-                { id: 'S103', firstName: 'Sophia', lastName: 'Williams', grade: '10', gender: 'Girls', type: 'Club', commitment: 2, startDate: '2026-10-01', pin: '1003' },
-                { id: 'S104', firstName: 'Noah', lastName: 'Brown', grade: '9', gender: 'Boys', type: 'Club', commitment: 1, startDate: '2026-10-01', pin: '1004' }
-            ];
-
-            state.events = [
-                { id: 'E1', date: '2026-10-02', title: 'Afternoon Practice', type: 'Practice', optional: false },
-                { id: 'E2', date: '2026-10-05', title: 'Varsity Time Trial Meet', type: 'Meet', optional: false },
-                { id: 'E3', date: '2026-10-07', title: 'Morning Swim Session', type: 'Practice', optional: false },
-                { id: 'E4', date: '2026-10-08', title: 'Afternoon Technique Practice', type: 'Practice', optional: false }
-            ];
-
-            state.rotations = [
-                { id: 'R1', title: 'Block 1: Oct 1 - Oct 14', startDate: '2026-10-01', endDate: '2026-10-14' },
-                { id: 'R2', title: 'Block 2: Oct 15 - Oct 28', startDate: '2026-10-15', endDate: '2026-10-28' }
-            ];
-
-            // Sample attendance
-            state.attendance = {
-                'E1_S101': 'present', 'E1_S102': 'present', 'E1_S103': 'present', 'E1_S104': 'absent',
-                'E2_S101': 'present', 'E2_S102': 'absent', 'E2_S103': 'nocomm', 'E2_S104': 'excused',
-                'E3_S101': 'present', 'E3_S102': 'present', 'E3_S103': 'present', 'E3_S104': 'present'
-            };
-
-            // Sample strength
-            state.strength = {
-                'R1_S101_1': true, 'R1_S101_2': true,
-                'R1_S102_1': true, 'R1_S102_2': false,
-                'R1_S103_1': true, 'R1_S103_2': true
-            };
-
-            saveState();
-            renderAll();
-            showToast('Sample team data loaded successfully!');
-        }
-
-        // NAVIGATION TAB SWITCHING
-        function switchTab(tabId) {
-            activeTab = tabId;
-            ['roster', 'attendance', 'strength', 'schedule', 'reports', 'settings'].forEach(t => {
-                const view = document.getElementById(`view-${t}`);
-                const btn = document.getElementById(`tab-btn-${t}`);
-                if (t === tabId) {
-                    view.classList.remove('hidden');
-                    btn.className = 'py-3 px-3 active-tab whitespace-nowrap';
-                } else {
-                    view.classList.add('hidden');
-                    btn.className = 'py-3 px-3 text-slate-400 hover:text-white whitespace-nowrap';
-                }
+                s.computedStats = {
+                    attPct: att.pct,
+                    strPct: str.pct,
+                    netScore: att.netScore,
+                    expectedPractices: att.expectedUnits,
+                    presents: att.presents,
+                    noComms: att.noComms,
+                    status: vst.label,
+                    statusColor: vst.color,
+                    lastUpdated: new Date().toISOString()
+                };
             });
-            renderAll();
+
+            localStorage.setItem(STORAGE_KEY_SWIMMERS, JSON.stringify(state.swimmers));
+            localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(state.events));
+            localStorage.setItem(STORAGE_KEY_ROTATIONS, JSON.stringify(state.rotations));
+            localStorage.setItem(STORAGE_KEY_ATTENDANCE, JSON.stringify(state.attendance));
+            localStorage.setItem(STORAGE_KEY_STRENGTH, JSON.stringify(state.strength));
+            localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(state.config));
+
+            if (state.config.autoSync && state.config.webAppUrl) {
+                syncToCloud(true); // Silent background auto-sync
+            }
         }
 
-        // RENDER ALL VIEWS
-        function renderAll() {
-            updateStatsHeader();
-            if (activeTab === 'roster') renderRosterTable();
-            if (activeTab === 'attendance') { renderMiniCalendar(); renderAttendancePanel(); }
-            if (activeTab === 'strength') renderStrengthTable();
-            if (activeTab === 'schedule') renderScheduleLists();
-            if (activeTab === 'reports') renderReportsTable();
-        }
+        /**
+         * UNIFIED & TIMEZONE-SYNCHRONIZED ATTENDANCE MATHEMATICS
+         */
+        function calculateSwimmerAttendance(swimmer) {
+            const startDate = swimmer.startDate || '2026-10-01';
 
-        // MATHEMATICAL ATTENDANCE CALCULATION ENGINE
-        function calculateSwimmerStats(swimmer) {
-            const swimmerEvents = state.events.filter(e => e.date >= swimmer.startDate);
-            
-            let possiblePractices = 0;
-            let presentCount = 0;
-            let absentCount = 0;
-            let nocommCount = 0;
-            let bonusCredits = 0;
+            if (swimmer.type === 'Club') {
+                const commitment = parseInt(swimmer.clubCommitment) || 2;
 
-            if (swimmer.type === 'Seasonal') {
-                const mandatoryEvents = swimmerEvents.filter(e => !e.optional);
-                possiblePractices = mandatoryEvents.length;
+                // Identify all active calendar weeks from start date up to latest event or today
+                const weekSet = new Set();
+                state.events.forEach(e => {
+                    if (e.date >= startDate) {
+                        weekSet.add(getWeekKey(e.date));
+                    }
+                });
+
+                Object.keys(state.attendance).forEach(key => {
+                    if (key.startsWith(swimmer.id + '_')) {
+                        const dateStr = key.split('_')[1];
+                        if (dateStr >= startDate) {
+                            weekSet.add(getWeekKey(dateStr));
+                        }
+                    }
+                });
+
+                const totalWeeks = Math.max(1, weekSet.size);
+                const totalExpectedUnits = totalWeeks * commitment;
+
+                let totalNetScore = 0;
+                let totalPresents = 0;
+                let totalNoComms = 0;
+                let totalAbsentComms = 0;
+                let totalExcused = 0;
+
+                weekSet.forEach(wKey => {
+                    let weekPresents = 0;
+                    let weekNoComms = 0;
+
+                    Object.keys(state.attendance).forEach(key => {
+                        if (key.startsWith(swimmer.id + '_')) {
+                            const dateStr = key.split('_')[1];
+                            if (getWeekKey(dateStr) === wKey) {
+                                const st = state.attendance[key];
+                                if (st === 'present') weekPresents++;
+                                if (st === 'no_comm') weekNoComms++;
+                                if (st === 'absent_comm') totalAbsentComms++;
+                                if (st === 'excused') totalExcused++;
+                            }
+                        }
+                    });
+
+                    totalPresents += weekPresents;
+                    totalNoComms += weekNoComms;
+
+                    // Club Earned per week: min(Present, Commitment) - (NoComm * 1)
+                    const weekEarned = Math.min(weekPresents, commitment) - (weekNoComms * 1);
+                    totalNetScore += weekEarned;
+                });
+
+                const rawPct = (totalNetScore / totalExpectedUnits) * 100;
+                const finalPct = Math.max(0, Math.min(100, Math.round(rawPct)));
+
+                return {
+                    netScore: totalNetScore,
+                    expectedUnits: totalExpectedUnits,
+                    pct: finalPct,
+                    presents: totalPresents,
+                    noComms: totalNoComms,
+                    absentComms: totalAbsentComms,
+                    excused: totalExcused,
+                    weeksCount: totalWeeks,
+                    commitment: commitment,
+                    breakdownText: `${totalNetScore} / ${totalExpectedUnits} units (${totalWeeks} wks @ ${commitment}/wk)`
+                };
             } else {
-                // Club Swimmers: Commitment * Active Weeks
-                const activeWeeks = calculateActiveWeeks(swimmer.startDate);
-                possiblePractices = activeWeeks * (parseInt(swimmer.commitment) || 2);
+                // Seasonal Swimmers Standard Formula
+                let expectedUnits = 0;
+                let netScore = 0;
+                let presents = 0;
+                let absentComms = 0;
+                let noComms = 0;
+                let excused = 0;
+                let bonuses = 0;
+
+                const applicableEvents = state.events.filter(e => e.date >= startDate);
+
+                applicableEvents.forEach(e => {
+                    const recKey = `${swimmer.id}_${e.date}`;
+                    const status = state.attendance[recKey] || 'absent_comm';
+
+                    if (e.type === 'Holiday' || !e.mandatory) {
+                        if (status === 'present') {
+                            netScore += 1; // +1 Bonus Credit
+                            bonuses++;
+                        }
+                    } else {
+                        if (status === 'excused') {
+                            excused++; // Exempt from expected
+                        } else {
+                            expectedUnits += 1;
+                            if (status === 'present') {
+                                netScore += 1;
+                                presents++;
+                            } else if (status === 'no_comm') {
+                                netScore -= 1; // Double penalty deduction (-1 net out of 1 expected)
+                                noComms++;
+                            } else if (status === 'absent_comm') {
+                                absentComms++;
+                            }
+                        }
+                    }
+                });
+
+                const rawPct = expectedUnits > 0 ? (netScore / expectedUnits) * 100 : 100;
+                const finalPct = Math.max(0, Math.min(100, Math.round(rawPct)));
+
+                return {
+                    netScore: netScore,
+                    expectedUnits: expectedUnits,
+                    pct: finalPct,
+                    presents: presents,
+                    noComms: noComms,
+                    absentComms: absentComms,
+                    excused: excused,
+                    bonuses: bonuses,
+                    breakdownText: `${netScore} / ${expectedUnits} mandatory units`
+                };
+            }
+        }
+
+        function calculateSwimmerStrength(swimmer) {
+            if (state.rotations.length === 0) return { totalSessions: 0, completedSessions: 0, pct: 100 };
+
+            const totalSessions = state.rotations.length * 2;
+            let completedSessions = 0;
+
+            state.rotations.forEach(r => {
+                const s1 = state.strength[`${swimmer.id}_${r.id}_s1`] ? 1 : 0;
+                const s2 = state.strength[`${swimmer.id}_${r.id}_s2`] ? 1 : 0;
+                completedSessions += (s1 + s2);
+            });
+
+            const pct = Math.round((completedSessions / totalSessions) * 100);
+            return { totalSessions, completedSessions, pct };
+        }
+
+        function calculateVarsityStatus(attendancePct, strengthPct) {
+            if (attendancePct >= 85 && strengthPct >= 85) {
+                return { label: 'Qualified', color: 'emerald', icon: 'fa-certificate' };
+            } else if (attendancePct >= 75 && strengthPct >= 75) {
+                return { label: 'At Risk', color: 'amber', icon: 'fa-triangle-exclamation' };
+            } else {
+                return { label: 'Ineligible', color: 'rose', icon: 'fa-ban' };
+            }
+        }
+
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(el => {
+                el.classList.remove('bg-aqua-500/20', 'text-aqua-400', 'border', 'border-aqua-500/30');
+                el.classList.add('text-slate-400', 'hover:text-slate-200');
+            });
+
+            const targetContent = document.getElementById(`content-${tabId}`);
+            if (targetContent) targetContent.classList.remove('hidden');
+
+            const targetTabBtn = document.getElementById(`tab-${tabId}`);
+            if (targetTabBtn) {
+                targetTabBtn.classList.add('bg-aqua-500/20', 'text-aqua-400', 'border', 'border-aqua-500/30');
+                targetTabBtn.classList.remove('text-slate-400');
             }
 
-            swimmerEvents.forEach(ev => {
-                const status = state.attendance[`${ev.id}_${swimmer.id}`];
-                if (ev.optional) {
-                    if (status === 'present') bonusCredits += 1;
-                } else {
-                    if (status === 'present') presentCount += 1;
-                    if (status === 'absent') absentCount += 1;
-                    if (status === 'nocomm') nocommCount += 1;
-                    if (status === 'excused' && swimmer.type === 'Seasonal') possiblePractices = Math.max(0, possiblePractices - 1);
-                }
-            });
-
-            // Net score formula: Present - (1 * Absent) - (2 * No Comm) + Bonus
-            const netScore = presentCount - (1 * absentCount) - (2 * nocommCount) + bonusCredits;
-            const swimPct = possiblePractices > 0 ? Math.max(0, Math.min(100, Math.round((netScore / possiblePractices) * 100))) : 100;
-
-            // Strength Calculations
-            const validRotations = state.rotations.filter(r => r.endDate >= swimmer.startDate);
-            const totalRequiredStrengthSessions = validRotations.length * 2;
-            let completedStrengthSessions = 0;
-
-            validRotations.forEach(r => {
-                if (state.strength[`${r.id}_${swimmer.id}_1`]) completedStrengthSessions++;
-                if (state.strength[`${r.id}_${swimmer.id}_2`]) completedStrengthSessions++;
-            });
-
-            const strengthPct = totalRequiredStrengthSessions > 0 ? Math.round((completedStrengthSessions / totalRequiredStrengthSessions) * 100) : 100;
-
-            // Letter Status
-            let varsityStatus = "Qualified";
-            if (swimPct < 75 || strengthPct < 75) varsityStatus = "Ineligible";
-            else if (swimPct < 85 || strengthPct < 85) varsityStatus = "At Risk";
-
-            return {
-                possiblePractices,
-                netScore,
-                swimPct,
-                strengthPct,
-                varsityStatus
-            };
+            renderActiveTab();
         }
 
-        function calculateActiveWeeks(startDateStr) {
-            const start = new Date(startDateStr);
-            const today = new Date();
-            const diffTime = Math.max(0, today - start);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return Math.max(1, Math.ceil(diffDays / 7));
+        function renderActiveTab() {
+            renderDashboardStats();
+            if (state.activeTab === 'dashboard') renderDashboardTable();
+            if (state.activeTab === 'attendance') {
+                renderMiniCalendar();
+                renderAttendanceTable();
+            }
+            if (state.activeTab === 'schedule') renderScheduleTable();
+            if (state.activeTab === 'strength') renderStrengthTable();
+            if (state.activeTab === 'roster') renderRosterTable();
+            if (state.activeTab === 'reports') renderReportsView();
         }
 
-        // STATS HEADER
-        function updateStatsHeader() {
-            document.getElementById('stat-total-swimmers').textContent = state.swimmers.length;
-            let qualified = 0;
-            let atRisk = 0;
+        function renderDashboardStats() {
+            const totalSwimmers = state.swimmers.length;
+            const seasonalCount = state.swimmers.filter(s => s.type === 'Seasonal').length;
+            const clubCount = state.swimmers.filter(s => s.type === 'Club').length;
+
+            let qualifiedCount = 0;
+            let sumAttendance = 0;
+            let sumStrength = 0;
 
             state.swimmers.forEach(s => {
-                const stats = calculateSwimmerStats(s);
-                if (stats.varsityStatus === 'Qualified') qualified++;
-                else atRisk++;
+                const att = calculateSwimmerAttendance(s);
+                const str = calculateSwimmerStrength(s);
+                sumAttendance += att.pct;
+                sumStrength += str.pct;
+
+                if (att.pct >= 85 && str.pct >= 85) qualifiedCount++;
             });
 
-            document.getElementById('stat-qualified').textContent = qualified;
-            document.getElementById('stat-at-risk').textContent = atRisk;
+            const avgAtt = totalSwimmers > 0 ? Math.round(sumAttendance / totalSwimmers) : 0;
+            const avgStr = totalSwimmers > 0 ? Math.round(sumStrength / totalSwimmers) : 0;
+
+            document.getElementById('stat-total-swimmers').innerText = totalSwimmers;
+            document.getElementById('stat-roster-breakdown').innerText = `${seasonalCount} Seasonal • ${clubCount} Club`;
+            document.getElementById('stat-letter-qualified').innerText = qualifiedCount;
+            document.getElementById('stat-avg-attendance').innerText = `${avgAtt}%`;
+            document.getElementById('stat-strength-compliance').innerText = `${avgStr}%`;
         }
 
-        // MULTI-COLUMN TABLE SORTING ENGINE
-        function sortTable(columnKey) {
-            if (currentSortColumn === columnKey) {
-                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSortColumn = columnKey;
-                currentSortDirection = 'asc';
-            }
+        function renderDashboardTable() {
+            const tbody = document.getElementById('table-dashboard-body');
+            tbody.innerHTML = '';
 
-            // Reset sort icons
-            ['lastName', 'grade', 'gender', 'type', 'swimPct', 'strengthPct', 'varsityStatus'].forEach(col => {
-                const el = document.getElementById(`sort-icon-${col}`);
-                if (el) el.textContent = '';
-            });
-
-            const iconEl = document.getElementById(`sort-icon-${columnKey}`);
-            if (iconEl) iconEl.textContent = currentSortDirection === 'asc' ? '▲' : '▼';
-
-            renderRosterTable();
-        }
-
-        // TAB 1: ROSTER RENDER
-        function renderRosterTable() {
-            const tbody = document.getElementById('roster-tbody');
-            const search = document.getElementById('roster-search').value.toLowerCase();
-            const filterType = document.getElementById('roster-filter-type').value;
+            const catFilter = document.getElementById('filter-category').value;
+            const genFilter = document.getElementById('filter-gender').value;
 
             let filtered = state.swimmers.filter(s => {
-                const matchesSearch = `${s.firstName} ${s.lastName} ${s.pin}`.toLowerCase().includes(search);
-                const matchesType = filterType === 'ALL' || s.type === filterType;
-                return matchesSearch && matchesType;
+                if (catFilter !== 'ALL' && s.type !== catFilter) return false;
+                if (genFilter !== 'ALL' && s.gender !== genFilter) return false;
+                return true;
             });
 
-            // Sorting
-            filtered.sort((a, b) => {
-                let valA, valB;
-                const statsA = calculateSwimmerStats(a);
-                const statsB = calculateSwimmerStats(b);
+            const list = filtered.map(s => {
+                const att = calculateSwimmerAttendance(s);
+                const str = calculateSwimmerStrength(s);
+                const vst = calculateVarsityStatus(att.pct, str.pct);
+                return { swimmer: s, att, str, vst };
+            });
 
-                if (currentSortColumn === 'lastName') { valA = a.lastName; valB = b.lastName; }
-                else if (currentSortColumn === 'grade') { valA = parseInt(a.grade); valB = parseInt(b.grade); }
-                else if (currentSortColumn === 'gender') { valA = a.gender; valB = b.gender; }
-                else if (currentSortColumn === 'type') { valA = a.type; valB = b.type; }
-                else if (currentSortColumn === 'swimPct') { valA = statsA.swimPct; valB = statsB.swimPct; }
-                else if (currentSortColumn === 'strengthPct') { valA = statsA.strengthPct; valB = statsB.strengthPct; }
-                else if (currentSortColumn === 'varsityStatus') { valA = statsA.varsityStatus; valB = statsB.varsityStatus; }
+            // Multi-column Table Sorting
+            const sortCol = state.sort.dashboard.col;
+            const sortDir = state.sort.dashboard.dir === 'asc' ? 1 : -1;
 
-                if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
-                if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+            list.sort((a, b) => {
+                if (sortCol === 'name') return sortDir * a.swimmer.name.localeCompare(b.swimmer.name);
+                if (sortCol === 'grade') return sortDir * (a.swimmer.grade - b.swimmer.grade);
+                if (sortCol === 'type') return sortDir * a.swimmer.type.localeCompare(b.swimmer.type);
+                if (sortCol === 'attendancePct') return sortDir * (a.att.pct - b.att.pct);
+                if (sortCol === 'strengthPct') return sortDir * (a.str.pct - b.str.pct);
+                if (sortCol === 'status') return sortDir * a.vst.label.localeCompare(b.vst.label);
                 return 0;
             });
 
-            tbody.innerHTML = '';
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400 italic">No swimmers found. Add a swimmer or adjust search filters.</td></tr>`;
-                return;
-            }
+            updateSortIcons('dashboard');
 
-            filtered.forEach(s => {
-                const stats = calculateSwimmerStats(s);
+            list.forEach(item => {
+                const s = item.swimmer;
+                const att = item.att;
+                const str = item.str;
+                const vst = item.vst;
+
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition';
+                tr.className = 'hover:bg-slate-800/40 transition';
 
-                const badgeColor = stats.varsityStatus === 'Qualified' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
-                                   stats.varsityStatus === 'At Risk' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-rose-100 text-rose-800 border-rose-200';
+                const typeBadge = s.type === 'Club'
+                    ? `<span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-semibold border border-blue-500/20">Club (${s.clubCommitment}/wk)</span>`
+                    : `<span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 font-semibold border border-purple-500/20">Seasonal</span>`;
+
+                const attColor = att.pct >= 85 ? 'text-emerald-400' : att.pct >= 75 ? 'text-amber-400' : 'text-rose-400';
+                const statusColor = vst.color === 'emerald' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : vst.color === 'amber' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30';
 
                 tr.innerHTML = `
-                    <td class="p-3 font-semibold text-slate-800">${s.lastName}, ${s.firstName}</td>
-                    <td class="p-3">${s.grade}th Grade</td>
-                    <td class="p-3">${s.gender}</td>
+                    <td class="p-3 font-medium text-white flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 text-xs shrink-0">
+                            ${s.name.charAt(0)}
+                        </div>
+                        <div>
+                            <div>${s.name}</div>
+                            <div class="text-[10px] text-slate-500">${s.gender} Team • PIN: ${s.pin}</div>
+                        </div>
+                    </td>
+                    <td class="p-3 text-slate-300">Grade ${s.grade}</td>
+                    <td class="p-3">${typeBadge}</td>
                     <td class="p-3">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.type === 'Seasonal' ? 'bg-blue-100 text-blue-800' : 'bg-indigo-100 text-indigo-800'}">
-                            ${s.type} ${s.type === 'Club' ? `(${s.commitment}/wk)` : ''}
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold ${attColor} text-sm">${att.pct}%</span>
+                            <span class="text-[11px] text-slate-400">(${att.breakdownText})</span>
+                        </div>
+                        <div class="text-[10px] text-slate-500 mt-0.5">Presents: ${att.presents} | NoComm Deductions: ${att.noComms}</div>
                     </td>
-                    <td class="p-3 text-center font-bold ${stats.swimPct >= 85 ? 'text-emerald-600' : 'text-amber-600'}">${stats.swimPct}%</td>
-                    <td class="p-3 text-center font-bold ${stats.strengthPct >= 85 ? 'text-emerald-600' : 'text-amber-600'}">${stats.strengthPct}%</td>
-                    <td class="p-3 text-center">
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${badgeColor}">
-                            ${stats.varsityStatus}
-                        </span>
+                    <td class="p-3 text-center font-semibold text-slate-200">
+                        ${str.pct}% <span class="text-[10px] text-slate-500 font-normal">(${str.completedSessions}/${str.totalSessions})</span>
                     </td>
-                    <td class="p-3 text-center font-mono font-bold text-slate-500">${s.pin}</td>
-                    <td class="p-3 text-right space-x-1">
-                        <button onclick="editSwimmer('${s.id}')" class="p-1.5 text-slate-500 hover:text-blue-600 rounded"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="promptDeleteSwimmer('${s.id}')" class="p-1.5 text-slate-500 hover:text-rose-600 rounded"><i class="fa-solid fa-trash-can"></i></button>
+                    <td class="p-3 text-right">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-semibold border ${statusColor} inline-flex items-center gap-1.5">
+                            <i class="fa-solid ${vst.icon}"></i> ${vst.label}
+                        </span>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        // SAFETY DELETE CONFIRMATION MODAL LOGIC
-        function promptDeleteSwimmer(id) {
-            const swimmer = state.swimmers.find(s => s.id === id);
-            if (!swimmer) return;
-
-            swimmerToDeleteId = id;
-            document.getElementById('delete-swimmer-name').textContent = `${swimmer.firstName} ${swimmer.lastName}`;
-            document.getElementById('delete-swimmer-info').textContent = `Grade ${swimmer.grade}th | ${swimmer.gender} Team | ${swimmer.type} (${swimmer.type === 'Club' ? swimmer.commitment + ' practices/wk' : 'Seasonal'}) | PIN: ${swimmer.pin}`;
-            
-            document.getElementById('delete-confirm-modal').classList.remove('hidden');
-        }
-
-        function closeDeleteModal() {
-            swimmerToDeleteId = null;
-            document.getElementById('delete-confirm-modal').classList.add('hidden');
-        }
-
-        function executeSwimmerDeletion() {
-            if (!swimmerToDeleteId) return;
-
-            // Delete swimmer
-            state.swimmers = state.swimmers.filter(s => s.id !== swimmerToDeleteId);
-
-            // Clean associated attendance and strength
-            Object.keys(state.attendance).forEach(key => {
-                if (key.endsWith(`_${swimmerToDeleteId}`)) delete state.attendance[key];
-            });
-            Object.keys(state.strength).forEach(key => {
-                if (key.includes(`_${swimmerToDeleteId}_`)) delete state.strength[key];
-            });
-
-            closeDeleteModal();
-            saveState();
-            renderAll();
-            showToast('Swimmer deleted successfully.', 'error');
-            autoSyncIfConfigured();
-        }
-
-        // TAB 2: MINI CALENDAR & ATTENDANCE PANEL
         function renderMiniCalendar() {
+            const daysGrid = document.getElementById('calendar-days-grid');
+            daysGrid.innerHTML = '';
+
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            document.getElementById('cal-month-year').textContent = `${monthNames[calMonth]} ${calYear}`;
-            document.getElementById('cal-current-month-label').textContent = monthNames[calMonth];
+            document.getElementById('calendar-month-year').innerText = `${monthNames[state.calendarMonth]} ${state.calendarYear}`;
 
-            const grid = document.getElementById('mini-cal-grid');
-            grid.innerHTML = '';
+            const firstDay = new Date(state.calendarYear, state.calendarMonth, 1).getDay();
+            const daysInMonth = new Date(state.calendarYear, state.calendarMonth + 1, 0).getDate();
 
-            const firstDay = new Date(calYear, calMonth, 1).getDay();
-            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-
-            // Empty slots
+            // Empty padding slots
             for (let i = 0; i < firstDay; i++) {
                 const empty = document.createElement('div');
-                empty.className = 'mini-cal-day empty-day';
-                grid.appendChild(empty);
+                empty.className = 'h-7';
+                daysGrid.appendChild(empty);
             }
 
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dayStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const cell = document.createElement('div');
-                
-                const hasEvent = state.events.some(e => e.date === dayStr);
-                const isSelected = activeDate === dayStr;
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayStr = String(day).padStart(2, '0');
+                const monthStr = String(state.calendarMonth + 1).padStart(2, '0');
+                const dateVal = `${state.calendarYear}-${monthStr}-${dayStr}`;
 
-                cell.className = `mini-cal-day relative ${isSelected ? 'mini-cal-selected' : ''}`;
-                cell.textContent = d;
+                const btn = document.createElement('button');
+                btn.className = `h-7 rounded-md font-medium text-xs flex flex-col items-center justify-center transition relative ${dateVal === state.selectedDate ? 'bg-aqua-500 text-slate-950 font-bold shadow' : 'hover:bg-slate-800 text-slate-300'}`;
+                btn.innerText = day;
+                btn.onclick = () => selectCalendarDate(dateVal);
 
-                if (hasEvent && !isSelected) {
+                // Indicator dot for scheduled events
+                const hasEvent = state.events.some(e => e.date === dateVal);
+                if (hasEvent) {
                     const dot = document.createElement('span');
-                    dot.className = 'w-1 h-1 rounded-full bg-blue-600 absolute bottom-1';
-                    cell.appendChild(dot);
+                    dot.className = `w-1 h-1 rounded-full absolute bottom-0.5 ${dateVal === state.selectedDate ? 'bg-slate-950' : 'bg-aqua-400'}`;
+                    btn.appendChild(dot);
                 }
 
-                cell.onclick = () => {
-                    activeDate = dayStr;
-                    renderMiniCalendar();
-                    renderAttendancePanel();
-                };
+                daysGrid.appendChild(btn);
+            }
 
-                grid.appendChild(cell);
+            document.getElementById('display-selected-date').innerText = state.selectedDate;
+            document.getElementById('attendance-active-date-label').innerText = state.selectedDate;
+
+            const ev = state.events.find(e => e.date === state.selectedDate);
+            const typeLabel = document.getElementById('display-selected-event-type');
+            if (ev) {
+                typeLabel.innerText = `${ev.type} (${ev.mandatory ? 'Mandatory' : 'Optional'})`;
+                typeLabel.className = ev.type === 'Meet' ? 'px-2 py-0.5 rounded text-[11px] bg-rose-500/20 text-rose-300 font-medium' : 'px-2 py-0.5 rounded text-[11px] bg-blue-500/20 text-blue-300 font-medium';
+            } else {
+                typeLabel.innerText = 'Standard Practice';
+                typeLabel.className = 'px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 font-medium';
             }
         }
 
-        function changeCalMonth(delta) {
-            calMonth += delta;
-            if (calMonth < 0) { calMonth = 11; calYear--; }
-            if (calMonth > 11) { calMonth = 0; calYear++; }
+        function changeCalendarMonth(delta) {
+            state.calendarMonth += delta;
+            if (state.calendarMonth < 0) {
+                state.calendarMonth = 11;
+                state.calendarYear--;
+            } else if (state.calendarMonth > 11) {
+                state.calendarMonth = 0;
+                state.calendarYear++;
+            }
             renderMiniCalendar();
         }
 
-        function renderAttendancePanel() {
-            document.getElementById('active-date-badge').textContent = activeDate;
-            const eventsOnDate = state.events.filter(e => e.date === activeDate);
-            const container = document.getElementById('attendance-list-container');
-            container.innerHTML = '';
+        function setTodayDate() {
+            const today = new Date();
+            state.calendarYear = today.getFullYear();
+            state.calendarMonth = today.getMonth();
+            selectCalendarDate(formatLocalDate(today));
+        }
 
-            if (eventsOnDate.length === 0) {
-                document.getElementById('active-event-title').textContent = "No Events Scheduled";
-                document.getElementById('active-event-sub').textContent = "No practice or meet is scheduled for this date.";
-                container.innerHTML = `
-                    <div class="p-8 text-center space-y-3">
-                        <i class="fa-solid fa-calendar-day text-3xl text-slate-300"></i>
-                        <p class="text-xs text-slate-500">No event scheduled on ${activeDate}.</p>
-                        <button onclick="openAddEventModalForActiveDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">
-                            Schedule Event
-                        </button>
-                    </div>
+        function selectCalendarDate(dateStr) {
+            state.selectedDate = dateStr;
+            renderMiniCalendar();
+            renderAttendanceTable();
+        }
+
+        function renderAttendanceTable() {
+            const tbody = document.getElementById('table-attendance-body');
+            tbody.innerHTML = '';
+
+            const query = (document.getElementById('attendance-search').value || '').toLowerCase();
+            let swimmers = state.swimmers.filter(s => s.name.toLowerCase().includes(query));
+
+            const sortCol = state.sort.attendance.col;
+            const sortDir = state.sort.attendance.dir === 'asc' ? 1 : -1;
+
+            swimmers.sort((a, b) => {
+                if (sortCol === 'name') return sortDir * a.name.localeCompare(b.name);
+                if (sortCol === 'type') return sortDir * a.type.localeCompare(b.type);
+                if (sortCol === 'attendancePct') {
+                    const attA = calculateSwimmerAttendance(a).pct;
+                    const attB = calculateSwimmerAttendance(b).pct;
+                    return sortDir * (attA - attB);
+                }
+                return 0;
+            });
+
+            updateSortIcons('attendance');
+
+            swimmers.forEach(s => {
+                const recKey = `${s.id}_${state.selectedDate}`;
+                const currentStatus = state.attendance[recKey] || 'absent_comm';
+                const att = calculateSwimmerAttendance(s);
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/40 transition';
+
+                const commBadge = s.type === 'Club'
+                    ? `<span class="text-[10px] text-blue-400 font-medium">Club (${s.clubCommitment}/wk)</span>`
+                    : `<span class="text-[10px] text-purple-400 font-medium">Seasonal</span>`;
+
+                tr.innerHTML = `
+                    <td class="p-3 font-medium text-white">${s.name}</td>
+                    <td class="p-3">${commBadge}</td>
+                    <td class="p-3 text-center">
+                        <div class="inline-flex rounded-lg bg-slate-950 p-1 border border-slate-800 gap-1">
+                            <button onclick="setAttendanceStatus('${s.id}', 'present')" class="px-2.5 py-1 rounded text-xs font-semibold transition ${currentStatus === 'present' ? 'bg-emerald-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'}">
+                                Present (+1)
+                            </button>
+                            <button onclick="setAttendanceStatus('${s.id}', 'absent_comm')" class="px-2.5 py-1 rounded text-xs font-semibold transition ${currentStatus === 'absent_comm' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'}">
+                                Abs (Comm)
+                            </button>
+                            <button onclick="setAttendanceStatus('${s.id}', 'no_comm')" class="px-2.5 py-1 rounded text-xs font-semibold transition ${currentStatus === 'no_comm' ? 'bg-rose-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'}">
+                                No Comm (-1)
+                            </button>
+                            <button onclick="setAttendanceStatus('${s.id}', 'excused')" class="px-2.5 py-1 rounded text-xs font-semibold transition ${currentStatus === 'excused' ? 'bg-sky-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'}">
+                                Excused
+                            </button>
+                        </div>
+                    </td>
+                    <td class="p-3 text-right">
+                        <span class="font-bold text-sm ${att.pct >= 85 ? 'text-emerald-400' : att.pct >= 75 ? 'text-amber-400' : 'text-rose-400'}">${att.pct}%</span>
+                        <div class="text-[10px] text-slate-500">${att.netScore} / ${att.expectedUnits} earned</div>
+                    </td>
                 `;
-                return;
-            }
-
-            const ev = eventsOnDate[0]; // Primary event
-            document.getElementById('active-event-title').textContent = ev.title;
-            document.getElementById('active-event-sub').textContent = `${ev.type} ${ev.optional ? '(Optional / Bonus)' : '(Mandatory)'}`;
-
-            if (state.swimmers.length === 0) {
-                container.innerHTML = `<p class="p-6 text-center text-xs text-slate-400">No swimmers in roster.</p>`;
-                return;
-            }
-
-            state.swimmers.forEach(s => {
-                const key = `${ev.id}_${s.id}`;
-                const currentStatus = state.attendance[key] || 'unrecorded';
-
-                const div = document.createElement('div');
-                div.className = 'p-3 flex flex-wrap justify-between items-center gap-2 hover:bg-slate-50 transition';
-                div.innerHTML = `
-                    <div>
-                        <p class="font-bold text-xs text-slate-800">${s.lastName}, ${s.firstName}</p>
-                        <p class="text-[10px] text-slate-400">${s.type} ${s.type === 'Club' ? `(${s.commitment}/wk)` : ''} | PIN: ${s.pin}</p>
-                    </div>
-                    <div class="flex gap-1">
-                        <button onclick="setAttendanceStatus('${ev.id}', '${s.id}', 'present')" class="px-2.5 py-1 rounded text-xs font-semibold border transition ${currentStatus === 'present' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 hover:bg-slate-100'}">
-                            Present (+1)
-                        </button>
-                        <button onclick="setAttendanceStatus('${ev.id}', '${s.id}', 'absent')" class="px-2.5 py-1 rounded text-xs font-semibold border transition ${currentStatus === 'absent' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 hover:bg-slate-100'}">
-                            Absent (-1)
-                        </button>
-                        <button onclick="setAttendanceStatus('${ev.id}', '${s.id}', 'nocomm')" class="px-2.5 py-1 rounded text-xs font-semibold border transition ${currentStatus === 'nocomm' ? 'bg-rose-600 text-white border-rose-600' : 'bg-white text-slate-600 hover:bg-slate-100'}">
-                            No Comm (-2)
-                        </button>
-                        <button onclick="setAttendanceStatus('${ev.id}', '${s.id}', 'excused')" class="px-2.5 py-1 rounded text-xs font-semibold border transition ${currentStatus === 'excused' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 hover:bg-slate-100'}">
-                            Excused
-                        </button>
-                    </div>
-                `;
-                container.appendChild(div);
+                tbody.appendChild(tr);
             });
         }
 
-        function setAttendanceStatus(eventId, swimmerId, status) {
-            state.attendance[`${eventId}_${swimmerId}`] = status;
+        function setAttendanceStatus(swimmerId, status) {
+            const recKey = `${swimmerId}_${state.selectedDate}`;
+            state.attendance[recKey] = status;
             saveState();
-            renderAttendancePanel();
-            autoSyncIfConfigured();
+            renderAttendanceTable();
+            renderDashboardStats();
         }
 
-        function markAllAttendance(status) {
-            const eventsOnDate = state.events.filter(e => e.date === activeDate);
-            if (eventsOnDate.length === 0) return;
-            const ev = eventsOnDate[0];
-
+        function batchMarkAttendance(status) {
             state.swimmers.forEach(s => {
-                state.attendance[`${ev.id}_${s.id}`] = status;
+                const recKey = `${s.id}_${state.selectedDate}`;
+                state.attendance[recKey] = status;
             });
             saveState();
-            renderAttendancePanel();
-            autoSyncIfConfigured();
-            showToast(`Marked all swimmers as ${status.toUpperCase()}.`);
+            renderAttendanceTable();
+            renderDashboardStats();
         }
 
-        // TAB 3: STRENGTH TRAINING RENDER
+        function renderScheduleTable() {
+            const tbody = document.getElementById('table-schedule-body');
+            tbody.innerHTML = '';
+
+            document.getElementById('event-count-badge').innerText = `${state.events.length} Events`;
+            const sortedEvents = [...state.events].sort((a, b) => b.date.localeCompare(a.date));
+
+            sortedEvents.forEach(ev => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/40 transition';
+
+                const catBadge = ev.type === 'Meet'
+                    ? `<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/30">Swim Meet</span>`
+                    : ev.type === 'Holiday'
+                    ? `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">Holiday Boost</span>`
+                    : `<span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30">Practice</span>`;
+
+                tr.innerHTML = `
+                    <td class="p-3 font-mono text-slate-300">${ev.date}</td>
+                    <td class="p-3 font-semibold text-white">${ev.title}</td>
+                    <td class="p-3">${catBadge}</td>
+                    <td class="p-3 text-center">
+                        ${ev.mandatory ? '<span class="text-emerald-400"><i class="fa-solid fa-check"></i> Yes</span>' : '<span class="text-slate-500">Optional</span>'}
+                    </td>
+                    <td class="p-3 text-right">
+                        <button onclick="deleteEvent('${ev.id}')" class="p-1.5 rounded text-rose-400 hover:bg-rose-500/20 transition">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function handleAddEvent(e) {
+            e.preventDefault();
+            const title = document.getElementById('event-title').value.trim();
+            const date = document.getElementById('event-date').value;
+            const type = document.getElementById('event-type').value;
+            const mandatory = document.getElementById('event-mandatory').checked;
+
+            if (!title || !date) return;
+
+            state.events.push({ id: 'ev_' + Date.now(), title, date, type, mandatory });
+            saveState();
+            document.getElementById('form-add-event').reset();
+            renderScheduleTable();
+            renderMiniCalendar();
+        }
+
+        function deleteEvent(eventId) {
+            state.events = state.events.filter(e => e.id !== eventId);
+            saveState();
+            renderScheduleTable();
+            renderMiniCalendar();
+        }
+
+        function handleAddRotation(e) {
+            e.preventDefault();
+            const name = document.getElementById('rotation-name').value.trim();
+            const startDate = document.getElementById('rotation-start').value;
+            const endDate = document.getElementById('rotation-end').value;
+
+            if (!name || !startDate || !endDate) return;
+
+            state.rotations.push({ id: 'rot_' + Date.now(), name, startDate, endDate });
+            saveState();
+            document.getElementById('form-add-rotation').reset();
+            renderStrengthTable();
+        }
+
         function renderStrengthTable() {
-            const select = document.getElementById('strength-rotation-select');
-            select.innerHTML = '';
+            const headerRow = document.getElementById('table-strength-header');
+            const tbody = document.getElementById('table-strength-body');
 
-            if (state.rotations.length === 0) {
-                select.innerHTML = `<option value="">No Rotations Configured</option>`;
-                document.getElementById('strength-tbody').innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No rotation blocks created yet.</td></tr>`;
-                return;
-            }
+            headerRow.innerHTML = `
+                <th onclick="handleSort('strength', 'name')" class="p-3 cursor-pointer hover:text-white select-none transition">
+                    Swimmer <span id="sort-strength-name" class="ml-1 text-[10px]">▲</span>
+                </th>
+            `;
 
             state.rotations.forEach(r => {
-                const opt = document.createElement('option');
-                opt.value = r.id;
-                opt.textContent = `${r.title} (${r.startDate} to ${r.endDate})`;
-                select.appendChild(opt);
+                const th = document.createElement('th');
+                th.className = 'p-3 text-center border-l border-slate-800';
+                th.innerHTML = `
+                    <div class="text-slate-200 font-semibold">${r.name}</div>
+                    <div class="text-[10px] text-slate-500 font-normal">Target: 2 Weight Sessions</div>
+                `;
+                headerRow.appendChild(th);
             });
 
-            const activeRotationId = select.value;
-            const tbody = document.getElementById('strength-tbody');
+            const thOverall = document.createElement('th');
+            thOverall.className = 'p-3 text-right border-l border-slate-800';
+            thOverall.innerText = 'Strength %';
+            headerRow.appendChild(thOverall);
+
             tbody.innerHTML = '';
 
-            state.swimmers.forEach(s => {
-                const stats = calculateSwimmerStats(s);
-                const key1 = `${activeRotationId}_${s.id}_1`;
-                const key2 = `${activeRotationId}_${s.id}_2`;
+            let swimmers = [...state.swimmers];
+            const sortDir = state.sort.strength.dir === 'asc' ? 1 : -1;
+            swimmers.sort((a, b) => sortDir * a.name.localeCompare(b.name));
 
-                const sess1 = !!state.strength[key1];
-                const sess2 = !!state.strength[key2];
+            updateSortIcons('strength');
 
+            swimmers.forEach(s => {
+                const str = calculateSwimmerStrength(s);
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition';
-                tr.innerHTML = `
-                    <td class="p-3 font-semibold text-slate-800">${s.lastName}, ${s.firstName}</td>
-                    <td class="p-3">${s.type}</td>
-                    <td class="p-3 text-center">
-                        <input type="checkbox" ${sess1 ? 'checked' : ''} onchange="toggleStrengthSession('${activeRotationId}', '${s.id}', 1)" class="w-4 h-4 text-indigo-600 rounded">
+                tr.className = 'hover:bg-slate-800/40 transition';
+
+                let rowHTML = `<td class="p-3 font-medium text-white">${s.name}</td>`;
+
+                state.rotations.forEach(r => {
+                    const key1 = `${s.id}_${r.id}_s1`;
+                    const key2 = `${s.id}_${r.id}_s2`;
+                    const s1Checked = state.strength[key1] ? 'checked' : '';
+                    const s2Checked = state.strength[key2] ? 'checked' : '';
+
+                    rowHTML += `
+                        <td class="p-3 text-center border-l border-slate-800">
+                            <div class="flex items-center justify-center gap-3">
+                                <label class="flex items-center gap-1 cursor-pointer text-[11px] text-slate-300">
+                                    <input type="checkbox" onchange="toggleStrengthSession('${s.id}', '${r.id}', 's1', this.checked)" ${s1Checked} class="rounded border-slate-700 bg-slate-950 text-purple-500 focus:ring-0">
+                                    <span>S1</span>
+                                </label>
+                                <label class="flex items-center gap-1 cursor-pointer text-[11px] text-slate-300">
+                                    <input type="checkbox" onchange="toggleStrengthSession('${s.id}', '${r.id}', 's2', this.checked)" ${s2Checked} class="rounded border-slate-700 bg-slate-950 text-purple-500 focus:ring-0">
+                                    <span>S2</span>
+                                </label>
+                            </div>
+                        </td>
+                    `;
+                });
+
+                rowHTML += `
+                    <td class="p-3 text-right font-bold border-l border-slate-800 ${str.pct >= 85 ? 'text-purple-400' : 'text-amber-400'}">
+                        ${str.pct}% <span class="text-[10px] text-slate-500 font-normal">(${str.completedSessions}/${str.totalSessions})</span>
                     </td>
-                    <td class="p-3 text-center">
-                        <input type="checkbox" ${sess2 ? 'checked' : ''} onchange="toggleStrengthSession('${activeRotationId}', '${s.id}', 2)" class="w-4 h-4 text-indigo-600 rounded">
-                    </td>
-                    <td class="p-3 text-center font-bold">${sess1 && sess2 ? 'Complete (2/2)' : sess1 || sess2 ? 'Partial (1/2)' : 'Incomplete (0/2)'}</td>
-                    <td class="p-3 text-center font-bold ${stats.strengthPct >= 85 ? 'text-emerald-600' : 'text-amber-600'}">${stats.strengthPct}%</td>
                 `;
+
+                tr.innerHTML = rowHTML;
                 tbody.appendChild(tr);
             });
         }
 
-        function toggleStrengthSession(rotationId, swimmerId, sessionNum) {
-            const key = `${rotationId}_${swimmerId}_${sessionNum}`;
-            state.strength[key] = !state.strength[key];
+        function toggleStrengthSession(swimmerId, rotId, session, isChecked) {
+            state.strength[`${swimmerId}_${rotId}_${session}`] = isChecked;
             saveState();
             renderStrengthTable();
-            autoSyncIfConfigured();
+            renderDashboardStats();
         }
 
-        // TAB 4: SCHEDULE & ROTATION LISTS
-        function renderScheduleLists() {
-            const eventsContainer = document.getElementById('schedule-events-list');
-            eventsContainer.innerHTML = '';
-
-            if (state.events.length === 0) {
-                eventsContainer.innerHTML = `<p class="text-xs text-slate-400 italic">No events scheduled.</p>`;
-            } else {
-                state.events.sort((a,b) => a.date.localeCompare(b.date)).forEach(e => {
-                    const div = document.createElement('div');
-                    div.className = 'p-3 bg-slate-50 rounded-lg border flex justify-between items-center text-xs';
-                    div.innerHTML = `
-                        <div>
-                            <span class="font-bold text-slate-800">${e.title}</span>
-                            <span class="text-slate-500 block">${e.date} | ${e.type} ${e.optional ? '(Optional)' : ''}</span>
-                        </div>
-                        <button onclick="deleteEvent('${e.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
-                    `;
-                    eventsContainer.appendChild(div);
-                });
-            }
-
-            const rotContainer = document.getElementById('schedule-rotations-list');
-            rotContainer.innerHTML = '';
-
-            if (state.rotations.length === 0) {
-                rotContainer.innerHTML = `<p class="text-xs text-slate-400 italic">No rotation blocks configured.</p>`;
-            } else {
-                state.rotations.forEach(r => {
-                    const div = document.createElement('div');
-                    div.className = 'p-3 bg-slate-50 rounded-lg border flex justify-between items-center text-xs';
-                    div.innerHTML = `
-                        <div>
-                            <span class="font-bold text-slate-800">${r.title}</span>
-                            <span class="text-slate-500 block">${r.startDate} to ${r.endDate}</span>
-                        </div>
-                        <button onclick="deleteRotation('${r.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
-                    `;
-                    rotContainer.appendChild(div);
-                });
-            }
-        }
-
-        // TAB 5: REPORTS & CSV EXPORT
-        function renderReportsTable() {
-            const tbody = document.getElementById('reports-tbody');
+        function renderRosterTable() {
+            const tbody = document.getElementById('table-roster-body');
             tbody.innerHTML = '';
 
-            state.swimmers.forEach(s => {
-                const stats = calculateSwimmerStats(s);
+            document.getElementById('roster-count-badge').innerText = `${state.swimmers.length} Swimmers`;
+
+            let swimmers = [...state.swimmers];
+            const sortCol = state.sort.roster.col;
+            const sortDir = state.sort.roster.dir === 'asc' ? 1 : -1;
+
+            swimmers.sort((a, b) => {
+                if (sortCol === 'name') return sortDir * a.name.localeCompare(b.name);
+                if (sortCol === 'grade') return sortDir * (a.grade - b.grade);
+                if (sortCol === 'gender') return sortDir * a.gender.localeCompare(b.gender);
+                if (sortCol === 'type') return sortDir * a.type.localeCompare(b.type);
+                return 0;
+            });
+
+            updateSortIcons('roster');
+
+            swimmers.forEach(s => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition';
+                tr.className = 'hover:bg-slate-800/40 transition';
+
                 tr.innerHTML = `
-                    <td class="p-3 font-semibold text-slate-800">${s.lastName}, ${s.firstName}</td>
-                    <td class="p-3">${s.type}</td>
-                    <td class="p-3 text-center">${stats.possiblePractices} practices</td>
-                    <td class="p-3 text-center font-bold">${stats.netScore} pts</td>
-                    <td class="p-3 text-center font-bold ${stats.swimPct >= 85 ? 'text-emerald-600' : 'text-amber-600'}">${stats.swimPct}%</td>
-                    <td class="p-3 text-center font-bold ${stats.strengthPct >= 85 ? 'text-emerald-600' : 'text-amber-600'}">${stats.strengthPct}%</td>
-                    <td class="p-3 text-center font-bold">${stats.varsityStatus}</td>
+                    <td class="p-3 font-semibold text-white">${s.name}</td>
+                    <td class="p-3 text-slate-300">Grade ${s.grade}</td>
+                    <td class="p-3 text-slate-300">${s.gender}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-xs font-medium ${s.type === 'Club' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'}">
+                            ${s.type} ${s.type === 'Club' ? `(${s.clubCommitment}/wk)` : ''}
+                        </span>
+                    </td>
+                    <td class="p-3 font-mono text-amber-300 font-bold">${s.pin}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="promptDeleteSwimmer('${s.id}')" class="px-2 py-1 rounded text-rose-400 hover:bg-rose-500/20 text-xs transition flex items-center gap-1 ml-auto">
+                            <i class="fa-regular fa-trash-can"></i> Delete
+                        </button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function exportToCSV() {
-            let csv = "First Name,Last Name,Grade,Gender,Category,Commitment,PIN,Swim Att %,Strength %,Varsity Letter Status\n";
-            state.swimmers.forEach(s => {
-                const stats = calculateSwimmerStats(s);
-                csv += `"${s.firstName}","${s.lastName}","${s.grade}","${s.gender}","${s.type}","${s.commitment}","${s.pin}","${stats.swimPct}%","${stats.strengthPct}%","${stats.varsityStatus}"\n`;
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Varsity_Swim_Team_Report_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            showToast('Exported CSV report successfully!');
-        }
-
-        // MODAL HANDLERS & FORM SAVING
-        function openAddSwimmerModal() {
-            document.getElementById('swimmer-id').value = '';
-            document.getElementById('swimmer-firstname').value = '';
-            document.getElementById('swimmer-lastname').value = '';
-            document.getElementById('swimmer-startdate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('swimmer-pin').value = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('swimmer-modal-title').textContent = "Add New Swimmer";
-            document.getElementById('swimmer-modal').classList.remove('hidden');
-        }
-
-        function editSwimmer(id) {
-            const s = state.swimmers.find(item => item.id === id);
-            if (!s) return;
-            document.getElementById('swimmer-id').value = s.id;
-            document.getElementById('swimmer-firstname').value = s.firstName;
-            document.getElementById('swimmer-lastname').value = s.lastName;
-            document.getElementById('swimmer-grade').value = s.grade;
-            document.getElementById('swimmer-gender').value = s.gender;
-            document.getElementById('swimmer-type').value = s.type;
-            document.getElementById('swimmer-commitment').value = s.commitment || 2;
-            document.getElementById('swimmer-startdate').value = s.startDate;
-            document.getElementById('swimmer-pin').value = s.pin;
-            toggleCommitmentDropdown();
-            document.getElementById('swimmer-modal-title').textContent = "Edit Swimmer Profile";
-            document.getElementById('swimmer-modal').classList.remove('hidden');
-        }
-
-        function closeSwimmerModal() {
-            document.getElementById('swimmer-modal').classList.add('hidden');
-        }
-
-        function toggleCommitmentDropdown() {
+        function toggleClubCommitmentInput() {
             const type = document.getElementById('swimmer-type').value;
-            const container = document.getElementById('commitment-container');
+            const container = document.getElementById('container-club-commitment');
             if (type === 'Club') container.classList.remove('hidden');
             else container.classList.add('hidden');
         }
 
-        function saveSwimmer(e) {
+        function handleAddSwimmer(e) {
             e.preventDefault();
-            const id = document.getElementById('swimmer-id').value || 'S' + Date.now();
-            const swimmer = {
-                id,
-                firstName: document.getElementById('swimmer-firstname').value.trim(),
-                lastName: document.getElementById('swimmer-lastname').value.trim(),
-                grade: document.getElementById('swimmer-grade').value,
-                gender: document.getElementById('swimmer-gender').value,
-                type: document.getElementById('swimmer-type').value,
-                commitment: parseInt(document.getElementById('swimmer-commitment').value) || 2,
-                startDate: document.getElementById('swimmer-startdate').value,
-                pin: document.getElementById('swimmer-pin').value.trim()
-            };
+            const name = document.getElementById('swimmer-name').value.trim();
+            const grade = parseInt(document.getElementById('swimmer-grade').value);
+            const gender = document.getElementById('swimmer-gender').value;
+            const type = document.getElementById('swimmer-type').value;
+            const commitment = parseInt(document.getElementById('swimmer-commitment').value);
+            const startDate = document.getElementById('swimmer-startdate').value;
+            let pin = document.getElementById('swimmer-pin').value.trim();
 
-            const index = state.swimmers.findIndex(s => s.id === id);
-            if (index >= 0) state.swimmers[index] = swimmer;
-            else state.swimmers.push(swimmer);
+            if (!name) return;
+            if (!pin || pin.length !== 4 || isNaN(pin)) pin = generateRandomPIN();
 
-            closeSwimmerModal();
+            state.swimmers.push({
+                id: 'sw_' + Date.now(),
+                name, grade, gender, type,
+                clubCommitment: type === 'Club' ? commitment : 2,
+                startDate, pin
+            });
+
             saveState();
-            renderAll();
-            showToast('Swimmer profile saved!');
-            autoSyncIfConfigured();
+            document.getElementById('form-add-swimmer').reset();
+            toggleClubCommitmentInput();
+            renderRosterTable();
+            renderDashboardStats();
         }
 
-        function openAddEventModal() {
-            document.getElementById('event-date').value = activeDate;
-            document.getElementById('event-modal').classList.remove('hidden');
+        /**
+         * SAFETY DELETION MODAL HANDLERS
+         */
+        function promptDeleteSwimmer(swimmerId) {
+            const swimmer = state.swimmers.find(s => s.id === swimmerId);
+            if (!swimmer) return;
+
+            state.pendingDeleteSwimmerId = swimmerId;
+
+            const detailsBox = document.getElementById('delete-swimmer-details');
+            detailsBox.innerHTML = `
+                <div><span class="text-slate-400">Name:</span> <strong class="text-white">${swimmer.name}</strong></div>
+                <div><span class="text-slate-400">Team / Grade:</span> <span class="text-slate-200">${swimmer.gender} Team • Grade ${swimmer.grade}</span></div>
+                <div><span class="text-slate-400">Category:</span> <span class="text-slate-200">${swimmer.type}</span></div>
+                <div><span class="text-slate-400">Swimmer PIN:</span> <code class="text-amber-300 font-mono">${swimmer.pin}</code></div>
+            `;
+
+            document.getElementById('modal-delete-swimmer').classList.remove('hidden');
         }
 
-        function openAddEventModalForActiveDate() {
-            document.getElementById('event-date').value = activeDate;
-            document.getElementById('event-modal').classList.remove('hidden');
+        function closeDeleteModal() {
+            state.pendingDeleteSwimmerId = null;
+            document.getElementById('modal-delete-swimmer').classList.add('hidden');
         }
 
-        function closeEventModal() {
-            document.getElementById('event-modal').classList.add('hidden');
-        }
+        function executeDeleteSwimmer() {
+            if (!state.pendingDeleteSwimmerId) return;
 
-        function saveEvent(e) {
-            e.preventDefault();
-            const ev = {
-                id: 'E' + Date.now(),
-                title: document.getElementById('event-title').value.trim(),
-                date: document.getElementById('event-date').value,
-                type: document.getElementById('event-type').value,
-                optional: document.getElementById('event-optional').checked
-            };
-            state.events.push(ev);
-            closeEventModal();
+            state.swimmers = state.swimmers.filter(s => s.id !== state.pendingDeleteSwimmerId);
             saveState();
-            renderAll();
-            showToast('Event scheduled successfully!');
-            autoSyncIfConfigured();
+            closeDeleteModal();
+            renderRosterTable();
+            renderDashboardStats();
         }
 
-        function deleteEvent(id) {
-            state.events = state.events.filter(e => e.id !== id);
-            saveState();
-            renderAll();
-            showToast('Event deleted.');
-            autoSyncIfConfigured();
+        function handleSort(view, col) {
+            if (state.sort[view].col === col) {
+                state.sort[view].dir = state.sort[view].dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.sort[view].col = col;
+                state.sort[view].dir = 'asc';
+            }
+
+            if (view === 'dashboard') renderDashboardTable();
+            if (view === 'attendance') renderAttendanceTable();
+            if (view === 'strength') renderStrengthTable();
+            if (view === 'roster') renderRosterTable();
         }
 
-        function openAddRotationModal() {
-            document.getElementById('rotation-modal').classList.remove('hidden');
+        function updateSortIcons(view) {
+            const currentSort = state.sort[view];
+            const cols = ['name', 'grade', 'gender', 'type', 'attendancePct', 'strengthPct', 'status'];
+
+            cols.forEach(c => {
+                const el = document.getElementById(`sort-${view}-${c}`);
+                if (el) {
+                    if (currentSort.col === c) {
+                        el.innerText = currentSort.dir === 'asc' ? '▲' : '▼';
+                        el.className = 'ml-1 text-[10px] text-aqua-400 font-bold';
+                    } else {
+                        el.innerText = '';
+                    }
+                }
+            });
         }
 
-        function closeRotationModal() {
-            document.getElementById('rotation-modal').classList.add('hidden');
+        function renderReportsView() {
+            document.getElementById('cloud-webapp-url').value = state.config.webAppUrl || '';
+            document.getElementById('cloud-autosync').checked = state.config.autoSync;
+            updateSyncIndicator('Local Mode', 'emerald');
         }
 
-        function saveRotation(e) {
-            e.preventDefault();
-            const r = {
-                id: 'R' + Date.now(),
-                title: document.getElementById('rotation-title').value.trim(),
-                startDate: document.getElementById('rotation-start').value,
-                endDate: document.getElementById('rotation-end').value
-            };
-            state.rotations.push(r);
-            closeRotationModal();
-            saveState();
-            renderAll();
-            showToast('Rotation block created!');
-            autoSyncIfConfigured();
-        }
-
-        function deleteRotation(id) {
-            state.rotations = state.rotations.filter(r => r.id !== id);
-            saveState();
-            renderAll();
-            showToast('Rotation block deleted.');
-            autoSyncIfConfigured();
-        }
-
-        // GOOGLE SHEETS APPS SCRIPT CLOUD BACKUP INTEGRATION
         function saveCloudSettings() {
-            const url = document.getElementById('setting-script-url').value.trim();
-            state.settings.scriptUrl = url;
+            const url = document.getElementById('cloud-webapp-url').value.trim();
+            state.config.webAppUrl = url;
             saveState();
-            syncToCloud();
+            alert('Cloud sync configuration saved successfully.');
         }
 
-        async function syncToCloud(showToasts = true) {
-            const url = state.settings.scriptUrl;
-            if (!url) {
-                if (showToasts) showToast('Please enter a valid Apps Script URL in Cloud Backup Settings.', 'error');
+        function toggleAutoSync(isAuto) {
+            state.config.autoSync = isAuto;
+            saveState();
+        }
+
+        /**
+         * GOOGLE SHEETS & PORTAL SYNCHRONIZATION
+         * Dispatches JSON payload containing pre-calculated computedStats on every swimmer
+         */
+        async function syncToCloud(isSilent = false) {
+            if (!state.config.webAppUrl) {
+                if (!isSilent) openSheetsModal();
+                updateSyncIndicator('Local Mode', 'emerald');
                 return;
             }
 
-            updateSyncStatus('syncing', 'Syncing...');
+            updateSyncIndicator('Syncing...', 'amber');
+            const icon = document.getElementById('sync-icon');
+            if (icon) icon.classList.add('fa-spin');
+
+            // Attach precomputed stats
+            const payloadSwimmers = state.swimmers.map(s => {
+                const att = calculateSwimmerAttendance(s);
+                const str = calculateSwimmerStrength(s);
+                const vst = calculateVarsityStatus(att.pct, str.pct);
+                return {
+                    ...s,
+                    computedStats: {
+                        attPct: att.pct,
+                        strPct: str.pct,
+                        netScore: att.netScore,
+                        expectedPractices: att.expectedUnits,
+                        status: vst.label,
+                        statusColor: vst.color,
+                        lastUpdated: new Date().toISOString()
+                    }
+                };
+            });
+
+            const payload = {
+                timestamp: new Date().toISOString(),
+                swimmers: payloadSwimmers,
+                events: state.events,
+                rotations: state.rotations,
+                attendance: state.attendance,
+                strength: state.strength
+            };
 
             try {
-                const response = await fetch(url, {
+                const response = await fetch(state.config.webAppUrl, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(state)
+                    body: JSON.stringify(payload)
                 });
 
-                state.settings.lastSynced = new Date().toISOString();
-                saveState();
-                updateSyncStatus('configured', 'Synced');
-                if (showToasts) showToast('Successfully backed up team data to Google Sheets!');
+                updateSyncIndicator('Synced', 'emerald');
+                if (!isSilent) {
+                    const toast = document.getElementById('reports-toast');
+                    if (toast) {
+                        toast.innerText = 'Data successfully synced with Google Cloud & Portal!';
+                        toast.classList.remove('hidden');
+                        setTimeout(() => toast.classList.add('hidden'), 3500);
+                    }
+                }
             } catch (err) {
-                console.error("Cloud Sync error:", err);
-                updateSyncStatus('error', 'Sync Failed');
-                if (showToasts) showToast('Failed to sync with Google Sheets. Check script URL.', 'error');
+                console.error("Sync failed:", err);
+                updateSyncIndicator('Sync Failed', 'rose');
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
             }
         }
 
-        function autoSyncIfConfigured() {
-            if (state.settings.scriptUrl) {
-                syncToCloud(false);
-            }
-        }
-
-        function updateSyncStatus(status, text) {
-            const badge = document.getElementById('sync-status-badge');
+        function updateSyncIndicator(text, color) {
             const statusText = document.getElementById('sync-status-text');
-            statusText.textContent = text;
+            const syncDot = document.getElementById('sync-dot');
+            const ind = document.getElementById('cloud-sync-status-indicator');
 
-            if (status === 'syncing') {
-                badge.className = "px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-900/40 text-amber-300 border border-amber-700/50 flex items-center gap-1.5";
-            } else if (status === 'configured') {
-                badge.className = "px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-900/40 text-emerald-300 border border-emerald-700/50 flex items-center gap-1.5";
-            } else {
-                badge.className = "px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-900/40 text-rose-300 border border-rose-700/50 flex items-center gap-1.5";
+            if (statusText) statusText.innerText = text;
+            if (syncDot) {
+                syncDot.className = `w-2 h-2 rounded-full bg-${color}-400 ${text === 'Syncing...' ? 'animate-ping' : ''}`;
+            }
+            if (ind) {
+                ind.innerText = text;
+                ind.className = `text-xs px-2.5 py-1 rounded-full bg-${color}-500/20 text-${color}-300 border border-${color}-500/30 font-medium`;
             }
         }
 
-        // TOAST NOTIFICATIONS SYSTEM
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `p-3 rounded-lg shadow-lg text-white text-xs font-semibold flex items-center gap-2 transition-all transform duration-300 pointer-events-auto ${type === 'error' ? 'bg-rose-600' : 'bg-slate-800'}`;
-            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-xmark' : 'fa-circle-check'}"></i> ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+        function exportToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Swimmer ID,Name,Grade,Team,Category,Weekly Commitment,PIN,Earned Credits,Expected Units,Swim Attendance %,Strength Compliance %,Varsity Letter Status\n";
+
+            state.swimmers.forEach(s => {
+                const att = calculateSwimmerAttendance(s);
+                const str = calculateSwimmerStrength(s);
+                const vst = calculateVarsityStatus(att.pct, str.pct);
+
+                const row = [
+                    s.id,
+                    `"${s.name}"`,
+                    s.grade,
+                    s.gender,
+                    s.type,
+                    s.type === 'Club' ? s.clubCommitment : 'N/A',
+                    s.pin,
+                    att.netScore,
+                    att.expectedUnits,
+                    `${att.pct}%`,
+                    `${str.pct}%`,
+                    `"${vst.label}"`
+                ].join(",");
+
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `varsity_swim_roster_${formatLocalDate(new Date())}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
+
+        function copyToClipboardTSV() {
+            let tsv = "Name\tGrade\tTeam\tCategory\tCommitment\tPIN\tEarned Credits\tExpected Units\tSwim Att %\tStrength %\tVarsity Status\n";
+
+            state.swimmers.forEach(s => {
+                const att = calculateSwimmerAttendance(s);
+                const str = calculateSwimmerStrength(s);
+                const vst = calculateVarsityStatus(att.pct, str.pct);
+
+                tsv += `${s.name}\t${s.grade}\t${s.gender}\t${s.type}\t${s.type === 'Club' ? s.clubCommitment : 'N/A'}\t${s.pin}\t${att.netScore}\t${att.expectedUnits}\t${att.pct}%\t${str.pct}%\t${vst.label}\n`;
+            });
+
+            const textarea = document.createElement('textarea');
+            textarea.value = tsv;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            const toast = document.getElementById('reports-toast') || document.getElementById('modal-sheets-toast');
+            if (toast) {
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 3500);
+            }
+        }
+
+        function loadSampleData() {
+            state.swimmers = DEFAULT_SWIMMERS;
+            state.events = DEFAULT_EVENTS;
+            state.rotations = DEFAULT_ROTATIONS;
+            state.attendance = DEFAULT_ATTENDANCE;
+            state.strength = DEFAULT_STRENGTH;
+            saveState();
+            renderActiveTab();
+            alert('Sample Varsity Team Data loaded successfully.');
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all roster and attendance records?')) {
+                state.swimmers = [];
+                state.events = [];
+                state.rotations = [];
+                state.attendance = {};
+                state.strength = {};
+                saveState();
+                renderActiveTab();
+            }
+        }
+
+        function toggleFormulaModal() {
+            document.getElementById('modal-formula').classList.toggle('hidden');
+        }
+
+        function openSheetsModal() {
+            document.getElementById('modal-sheets').classList.remove('hidden');
+        }
+
+        function closeSheetsModal() {
+            document.getElementById('modal-sheets').classList.add('hidden');
+        }
+
+        function openGasHelpModal() {
+            document.getElementById('modal-gas-help').classList.remove('hidden');
+        }
+
+        function closeGasHelpModal() {
+            document.getElementById('modal-gas-help').classList.add('hidden');
+        }
+
+        // Application Initialization
+        window.onload = function() {
+            loadState();
+            switchTab('dashboard');
+        };
     </script>
 </body>
 </html>
